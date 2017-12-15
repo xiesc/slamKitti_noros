@@ -1,0 +1,3 @@
+/home/xiesc/xieshichao/slamKitti_noros/build/CMakeFiles/edit_cache.dir
+/home/xiesc/xieshichao/slamKitti_noros/build/CMakeFiles/rebuild_cache.dir
+/home/xiesc/xieshichao/slamKitti_noros/build/CMakeFiles/loam_kitti.dir
