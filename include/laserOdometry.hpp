@@ -32,28 +32,16 @@ class laserOdometry{
         
         
      laserOdometryBack laserOdometryHandler(const scanRegistrationBack& scanValueBack){ 
-           
-        ros::Subscriber subCornerPointsSharp = nh.subscribe<sensor_msgs::PointCloud2>
-                                                ("/laser_cloud_sharp", 2, laserCloudSharpHandler);
+        
+        laserCloudSharpHandler(scanValueBack.cornerPointsSharp);
+        laserCloudLessSharpHandler(scanValueBack.cornerPointsLessSharp);
+        laserCloudFlatHandler(scanValueBack.surfPointsFlat);
+        laserCloudLessFlatHandler(scanValueBack.surfPointsLessFlat);
+        laserCloudFullResHandler(scanValueBack.laserCloud);
+        imuTransHandler(scanValueBack.imuTrans);
 
-        ros::Subscriber subCornerPointsLessSharp = nh.subscribe<sensor_msgs::PointCloud2>
-                                                    ("/laser_cloud_less_sharp", 2, laserCloudLessSharpHandler);
-
-        ros::Subscriber subSurfPointsFlat = nh.subscribe<sensor_msgs::PointCloud2>
-                                            ("/laser_cloud_flat", 2, laserCloudFlatHandler);
-
-        ros::Subscriber subSurfPointsLessFlat = nh.subscribe<sensor_msgs::PointCloud2>
-                                                ("/laser_cloud_less_flat", 2, laserCloudLessFlatHandler);
-
-        ros::Subscriber subLaserCloudFullRes = nh.subscribe<sensor_msgs::PointCloud2> 
-                                                ("/velodyne_cloud_2", 2, laserCloudFullResHandler);
-
-        ros::Subscriber subImuTrans = nh.subscribe<sensor_msgs::PointCloud2> 
-                                        ("/imu_trans", 5, imuTransHandler);
-
-
+        laserOdometryBack odometryValueBack;
       
-
         std::vector<int> pointSearchInd;
         std::vector<float> pointSearchSqDis;
 
@@ -95,19 +83,9 @@ class laserOdometry{
                 kdtreeCornerLast->setInputCloud(laserCloudCornerLast);
                 kdtreeSurfLast->setInputCloud(laserCloudSurfLast);
 
-                sensor_msgs::PointCloud2 laserCloudCornerLast2;
-                pcl::toROSMsg(*laserCloudCornerLast, laserCloudCornerLast2);
-                laserCloudCornerLast2.header.stamp = ros::Time().fromSec(timeSurfPointsLessFlat);
-                laserCloudCornerLast2.header.frame_id = "/camera";
-                pubLaserCloudCornerLast.publish(laserCloudCornerLast2);
+                
 
-                sensor_msgs::PointCloud2 laserCloudSurfLast2;
-                pcl::toROSMsg(*laserCloudSurfLast, laserCloudSurfLast2);
-                laserCloudSurfLast2.header.stamp = ros::Time().fromSec(timeSurfPointsLessFlat);
-                laserCloudSurfLast2.header.frame_id = "/camera";
-                pubLaserCloudSurfLast.publish(laserCloudSurfLast2);
-
-                outfile<<ros::Time::now()<<","<<num_id<<",cornerlast"<<std::endl;
+                outfile<<num_id<<",cornerlast"<<std::endl;
                 num_id++;
             
                 //github源代码第二帧位移没算的原因！！！！！！！！！！
@@ -115,15 +93,16 @@ class laserOdometry{
                 laserCloudCornerLastNum = laserCloudCornerLast->points.size();
                 laserCloudSurfLastNum = laserCloudSurfLast->points.size();
                 
-                laserOdometryBack odometryValueBack;
-                odometryValueBack
-
+                
+                odometryValueBack.laserCloudCornerLast = laserCloudCornerLast;
+                odometryValueBack.laserCloudSurfLast = laserCloudSurfLast; 
+                
                 
 
                 systemInited = true;
 
-                return 
-                continue;
+                return odometryValueBack;
+                
             }
 
             transform[3] -= imuVeloFromStartX * scanPeriod;
@@ -520,8 +499,16 @@ class laserOdometry{
             transformSum[3] = tx;
             transformSum[4] = ty;
             transformSum[5] = tz;
-
-
+             
+             
+               
+            
+            odometryValueBack.transformSum[0] = rx;
+            odometryValueBack.transformSum[1] = ry;
+            odometryValueBack.transformSum[2] = rz;
+            odometryValueBack.transformSum[3] = tx;
+            odometryValueBack.transformSum[4] = ty;
+            odometryValueBack.transformSum[5] = tz;
 
      
                 
@@ -564,25 +551,17 @@ class laserOdometry{
 
             
 
-                sensor_msgs::PointCloud2 laserCloudCornerLast2;
-                pcl::toROSMsg(*laserCloudCornerLast, laserCloudCornerLast2);
-                laserCloudCornerLast2.header.stamp = ros::Time().fromSec(timeSurfPointsLessFlat);
-                laserCloudCornerLast2.header.frame_id = "/camera";
-                pubLaserCloudCornerLast.publish(laserCloudCornerLast2);
-
-                sensor_msgs::PointCloud2 laserCloudSurfLast2;
-                pcl::toROSMsg(*laserCloudSurfLast, laserCloudSurfLast2);
-                laserCloudSurfLast2.header.stamp = ros::Time().fromSec(timeSurfPointsLessFlat);
-                laserCloudSurfLast2.header.frame_id = "/camera";
-                pubLaserCloudSurfLast.publish(laserCloudSurfLast2);
-
-                sensor_msgs::PointCloud2 laserCloudFullRes3;
-                pcl::toROSMsg(*laserCloudFullRes, laserCloudFullRes3);
-                laserCloudFullRes3.header.stamp = ros::Time().fromSec(timeSurfPointsLessFlat);
-                laserCloudFullRes3.header.frame_id = "/camera";
-                pubLaserCloudFullRes.publish(laserCloudFullRes3);
+             
                 
-                outfile<<ros::Time::now()<<","<<num_id<<",cornerlast"<<std::endl;
+                
+                             
+                odometryValueBack.laserCloudCornerLast = laserCloudCornerLast;
+                odometryValueBack.laserCloudFullRes = laserCloudFullRes;
+                odometryValueBack.laserCloudSurfLast = laserCloudSurfLast;
+
+
+
+                outfile<<num_id<<",cornerlast"<<std::endl;
                 num_id++;
 
             
@@ -590,7 +569,7 @@ class laserOdometry{
 
 
 
-        return 0;
+            return odometryValueBack;
         }
 
     private:

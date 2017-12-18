@@ -1,6 +1,7 @@
 
 #include <scanRegistration.hpp>
-
+#include <laserOdometry.hpp>
+#include <laserMapping.hpp>
 
 
 
@@ -37,8 +38,8 @@ int main(){
 
 
     scanRegistration scanner;
-
-
+	laserOdometry odometrier;
+	laserMapping mapper;
 
 
 
@@ -78,12 +79,16 @@ int main(){
 		input.close();
         
         // pcl::io::savePCDFileASCII ("/home/xiesc/test.pcd", points);
-        cout<< 0.0<<endl;
+        
 		// cout << "Read KTTI point cloud with " << j << " belong to " <<filename<<","<<i <<endl;
-        cout<< 0.1<<endl;
+        
 		scanRegistrationBack scanValueBack;
-        cout<< 0.2<<endl;
+        laserOdometryBack odometryValueBack;
+		laserMappingBack mappingBackValue;
+
         scanValueBack = scanner.laserCloudHandler(points);
+		odometryValueBack = odometrier.laserOdometryHandler(scanValueBack);
+		mappingBackValue = mapper.laserMappingHandler(odometryValueBack);
         scanner.test_print();
 	
     

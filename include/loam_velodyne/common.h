@@ -59,4 +59,17 @@ struct laserOdometryBack{
   
 };
 
+
+struct laserMappingBack{
+
+  float transformAftMapped[6];
+
+  pcl::PointCloud<PointType>::Ptr laserCloudSurround;
+  pcl::PointCloud<PointType>::Ptr laserCloudFullRes;
+  
+};
+
+
+
+
 #endif
