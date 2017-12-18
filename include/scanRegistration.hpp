@@ -37,15 +37,15 @@ class scanRegistration{
         }
 
         void test_print(){
-            cout<<1.2<<endl;
-            cout<<t[0]<<endl;
+            cerr<<1.2<<endl;
+           
 
         }
 
         scanRegistrationBack laserCloudHandler(const pcl::PointCloud<pcl::PointXYZI>& laserCloudIn2)
         {
         
-        cerr <<1.1;  
+        cerr <<1.1<<endl;  
             
           
         std::vector<int> scanStartInd(N_SCANS, 0);

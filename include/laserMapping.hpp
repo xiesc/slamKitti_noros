@@ -43,8 +43,8 @@ public:
              laserCloudCenWidth = 10;//cube中点对应的索引，可能会随着位置的移动变化
              laserCloudCenHeight = 5;
              laserCloudCenDepth = 10;
-            memset(transformSum,0,6);memset(transformIncre,0,6);memset(transformTobeMapped,0,6);memset(transformBefMapped,0,6);memset(transformAftMapped,0,6);
-            systemInit = false;
+            memset(transformSum,0,sizeof(transformSum));memset(transformIncre,0,sizeof(transformIncre));memset(transformTobeMapped,0,sizeof(transformTobeMapped));memset(transformBefMapped,0,sizeof(transformBefMapped));memset(transformAftMapped,0,sizeof(transformAftMapped));
+            systemInit = true;
         }
         
                 
@@ -54,9 +54,10 @@ public:
 
             laserMappingBack mappingBackValue;
 
-            if (systemInit = false){
-                memset(mappingBackValue.transformAftMapped,0,6);
-                    systemInit = true;
+            if (systemInit){
+                memset(mappingBackValue.transformAftMapped,0,sizeof(mappingBackValue.transformAftMapped));
+                
+                    systemInit = false;
                     return mappingBackValue;
 
 

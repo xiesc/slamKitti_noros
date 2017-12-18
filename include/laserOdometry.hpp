@@ -26,7 +26,7 @@ class laserOdometry{
                imuRollLast = 0; imuPitchLast = 0; imuYawLast = 0;
                imuShiftFromStartX = 0; imuShiftFromStartY = 0; imuShiftFromStartZ = 0;
                imuVeloFromStartX = 0; imuVeloFromStartY = 0; imuVeloFromStartZ = 0;
-                memset(transform,0,6);memset(transformSum,0,6);
+                memset(transform,0,sizeof(transform));memset(transformSum,0,sizeof(transformSum));
 
         }
         
@@ -96,8 +96,8 @@ class laserOdometry{
                 
                 odometryValueBack.laserCloudCornerLast = laserCloudCornerLast;
                 odometryValueBack.laserCloudSurfLast = laserCloudSurfLast; 
-                
-                
+                odometryValueBack.laserCloudFullRes.reset(new pcl::PointCloud<PointType>());
+                memset(odometryValueBack.transformSum,0,sizeof(odometryValueBack.transformSum));
 
                 systemInited = true;
 
@@ -105,9 +105,7 @@ class laserOdometry{
                 
             }
 
-            transform[3] -= imuVeloFromStartX * scanPeriod;
-            transform[4] -= imuVeloFromStartY * scanPeriod;
-            transform[5] -= imuVeloFromStartZ * scanPeriod;
+
             // ROS_INFO("%d,%d",laserCloudCornerLastNum,laserCloudSurfLastNum);
             if (laserCloudCornerLastNum > 10 && laserCloudSurfLastNum > 100) {
                 std::vector<int> indices;

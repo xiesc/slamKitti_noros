@@ -44,7 +44,7 @@ int main(){
 
 
 	 
-	for (i=0;i<1 ;i++){
+	for (i=0;i<10 ;i++){
 		
 		if (i<10) 
 			snprintf(filename,sizeof(filename),"/home/xiesc/09/velodyne/00000%d.bin",i);
