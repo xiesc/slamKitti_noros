@@ -45,7 +45,7 @@ class scanRegistration{
         scanRegistrationBack laserCloudHandler(const pcl::PointCloud<pcl::PointXYZI>& laserCloudIn2)
         {
         
-        cerr <<1.1<<endl;  
+        // cerr <<1.1<<endl;  
             
           
         std::vector<int> scanStartInd(N_SCANS, 0);
@@ -150,15 +150,7 @@ class scanRegistration{
             laserCloudScans[scanID].push_back(point);
         }
         cloudSize = count;
-        // int woluanxiede =0;
-        // for(int i=0;i<64;i++){
-        // woluanxiede = laserCloudScans[i].points.size();
-        // ROS_INFO("%d",woluanxiede);
-        // }
-
-
-        // ROS_INFO("%d",count);
-        // ROS_INFO("3");
+      
 
 
         pcl::PointCloud<PointType>::Ptr laserCloud(new pcl::PointCloud<PointType>());

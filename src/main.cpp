@@ -19,21 +19,59 @@
 #include <pcl/surface/gp3.h>
 #include <pcl/io/vtk_io.h>
 #include <pcl/filters/voxel_grid.h>
-
+#include<pcl/visualization/cloud_viewer.h>
 
 
 
 using namespace pcl;
 using namespace std;
 
-int main(){
 
+ void getFiles(string path, vector<string>& files){
+            
+            struct dirent *ptr;    
+            DIR *dir;
+            dir=opendir(path.c_str());
+            int i = 0;
+            while((ptr=readdir(dir))!=NULL)
+            {
+                string p;
+            //跳过'.'和'..'两个目录
+                if(ptr->d_name[0] == '.'){
+                    
+                    continue;}
+                printf("%s is ready...\n",ptr->d_name);
+                // sprintf(files[i],"./one/%s",ptr->d_name);
+                files.push_back(p.assign(path).append("/").append(ptr->d_name));
+
+             
+          
+            }
+            closedir(dir);
+
+
+
+
+
+    }
+
+
+
+int main(int argc, char* args[]){
 	
+	
+	vector<string> files;
+	getFiles(args[1], files);
+	
+	std::ofstream outfile;
 	int i;
 	char filename[50] = {0};
+	string p;
 
-	
+	outfile.open (p.assign(args[1]).append("/../pose.txt").c_str());
+	int num_id=0;
  	
+    pcl::visualization::CloudViewer viewer ("mapping viewer");  
        
 
 
@@ -44,16 +82,16 @@ int main(){
 
 
 	 
-	for (i=0;i<10 ;i++){
+	for (i=0;i<files.size() ;i++){
 		
 		if (i<10) 
-			snprintf(filename,sizeof(filename),"/home/xiesc/09/velodyne/00000%d.bin",i);
+			snprintf(filename,sizeof(filename),"%s/00000%d.bin",args[1],i);
 			else if (10<=i &&i<100)
-			snprintf(filename,sizeof(filename),"/home/xiesc/09/velodyne/0000%d.bin",i);
+			snprintf(filename,sizeof(filename),"%s/0000%d.bin",args[1],i);
 			else if (100<=i && i <1000)
-			snprintf(filename,sizeof(filename),"/home/xiesc/09/velodyne/000%d.bin",i); 
+			snprintf(filename,sizeof(filename),"%s/000%d.bin",args[1],i); 
 			else if (1000<=i && i <10000)
-			snprintf(filename,sizeof(filename),"/home/xiesc/09/velodyne/00%d.bin",i); 
+			snprintf(filename,sizeof(filename),"%s/00%d.bin",args[1],i); 
 			
 		
 		
@@ -61,7 +99,7 @@ int main(){
 		// load point cloud
 		fstream input(filename, ios::in | ios::binary);
 		if(!input.good()){
-			cerr << "Could not read file: " << filename << endl;
+			cerr << "Could not read file: " << filename<< endl;
 			exit(EXIT_FAILURE);
 		}
 		input.seekg(0, ios::beg);
@@ -80,7 +118,7 @@ int main(){
         
         // pcl::io::savePCDFileASCII ("/home/xiesc/test.pcd", points);
         
-		// cout << "Read KTTI point cloud with " << j << " belong to " <<filename<<","<<i <<endl;
+		cout << "Read KTTI point cloud with " << j << " belong to " <<filename<<","<<i <<endl;
         
 		scanRegistrationBack scanValueBack;
         laserOdometryBack odometryValueBack;
@@ -89,15 +127,34 @@ int main(){
         scanValueBack = scanner.laserCloudHandler(points);
 		odometryValueBack = odometrier.laserOdometryHandler(scanValueBack);
 		mappingBackValue = mapper.laserMappingHandler(odometryValueBack);
-        scanner.test_print();
-	
-    
+        // scanner.test_print();
+
+
+        // std::stringstream filename;
+        // filename << "/home/xiesc/testpcd_map/"<<num_id<<".pcd";
+        
+        // pcl::io::savePCDFileASCII (filename.str(), *mappingBackValue.laserCloudSurround);
+
+		// if (num_id>0){
+		// std::stringstream filename2;
+        // filename2 << "/home/xiesc/testpcd_second_frame/"<<num_id<<".pcd";
+        
+        // pcl::io::savePCDFileASCII (filename2.str(), *mappingBackValue.laserCloudFullRes);
+		// }
+
+     	num_id++;
+		 viewer.showCloud(mappingBackValue.laserCloudSurround);  
+
+		outfile<<mappingBackValue.transformAftMapped[0]<<" "<<mappingBackValue.transformAftMapped[1]<<" "<<mappingBackValue.transformAftMapped[2]<<" "<<mappingBackValue.transformAftMapped[3]<<" "<<mappingBackValue.transformAftMapped[4]<<" "<<mappingBackValue.transformAftMapped[5]<<endl;
+
     	// // Save DoN features
 		// writer.write<PointXYZI> (outfile, *points, false);
 		
 	}
 
-
+//  	while (!viewer.wasStopped ())  
+//   {  
+//   }  
 
 
 

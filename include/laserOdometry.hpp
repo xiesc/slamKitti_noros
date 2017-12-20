@@ -55,12 +55,7 @@ class laserOdometry{
 
 
             if (newCornerPointsSharp && newCornerPointsLessSharp && newSurfPointsFlat && 
-                newSurfPointsLessFlat && newLaserCloudFullRes && newImuTrans &&
-                fabs(timeCornerPointsSharp - timeSurfPointsLessFlat) < 0.005 &&
-                fabs(timeCornerPointsLessSharp - timeSurfPointsLessFlat) < 0.005 &&
-                fabs(timeSurfPointsFlat - timeSurfPointsLessFlat) < 0.005 &&
-                fabs(timeLaserCloudFullRes - timeSurfPointsLessFlat) < 0.005 &&
-                fabs(timeImuTrans - timeSurfPointsLessFlat) < 0.005) {
+                newSurfPointsLessFlat && newLaserCloudFullRes && newImuTrans) {
             newCornerPointsSharp = false;
             newCornerPointsLessSharp = false;
             newSurfPointsFlat = false;
@@ -112,65 +107,66 @@ class laserOdometry{
                 pcl::removeNaNFromPointCloud(*cornerPointsSharp,*cornerPointsSharp, indices);
                 int cornerPointsSharpNum = cornerPointsSharp->points.size();
                 int surfPointsFlatNum = surfPointsFlat->points.size();
+                
                 for (int iterCount = 0; iterCount < 25; iterCount++) {
-                laserCloudOri->clear();
-                coeffSel->clear();
+                    laserCloudOri->clear();
+                    coeffSel->clear();
 
-                for (int i = 0; i < cornerPointsSharpNum; i++) {
-                    TransformToStart(&cornerPointsSharp->points[i], &pointSel);//这个位置应该是在把点投影到每一个scan开始的时候
+                    for (int i = 0; i < cornerPointsSharpNum; i++) {
+                        TransformToStart(&cornerPointsSharp->points[i], &pointSel);//这个位置应该是在把点投影到每一个scan开始的时候
 
                     if (iterCount % 5 == 0) {//每隔5次迭代，重新找一次点之间的对应关系
-                    std::vector<int> indices;
-                    pcl::removeNaNFromPointCloud(*laserCloudCornerLast,*laserCloudCornerLast, indices);
-                    kdtreeCornerLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
-                    int closestPointInd = -1, minPointInd2 = -1;
-                    if (pointSearchSqDis[0] < 25) {
-                        closestPointInd = pointSearchInd[0];
-                        int closestPointScan = int(laserCloudCornerLast->points[closestPointInd].intensity);
+                        std::vector<int> indices;
+                        pcl::removeNaNFromPointCloud(*laserCloudCornerLast,*laserCloudCornerLast, indices);
+                        kdtreeCornerLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
+                        int closestPointInd = -1, minPointInd2 = -1;
+                        if (pointSearchSqDis[0] < 25) {
+                            closestPointInd = pointSearchInd[0];
+                            int closestPointScan = int(laserCloudCornerLast->points[closestPointInd].intensity);
 
-                        float pointSqDis, minPointSqDis2 = 25;
-                        for (int j = closestPointInd + 1; j < cornerPointsSharpNum; j++) {
-                        if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan + 2.5) {
-                            break;
-                        }
+                            float pointSqDis, minPointSqDis2 = 25;
+                            for (int j = closestPointInd + 1; j < cornerPointsSharpNum; j++) {
+                            if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan + 2.5) {
+                                break;
+                            }
 
-                        pointSqDis = (laserCloudCornerLast->points[j].x - pointSel.x) * 
-                                    (laserCloudCornerLast->points[j].x - pointSel.x) + 
-                                    (laserCloudCornerLast->points[j].y - pointSel.y) * 
-                                    (laserCloudCornerLast->points[j].y - pointSel.y) + 
-                                    (laserCloudCornerLast->points[j].z - pointSel.z) * 
-                                    (laserCloudCornerLast->points[j].z - pointSel.z);
+                            pointSqDis = (laserCloudCornerLast->points[j].x - pointSel.x) * 
+                                        (laserCloudCornerLast->points[j].x - pointSel.x) + 
+                                        (laserCloudCornerLast->points[j].y - pointSel.y) * 
+                                        (laserCloudCornerLast->points[j].y - pointSel.y) + 
+                                        (laserCloudCornerLast->points[j].z - pointSel.z) * 
+                                        (laserCloudCornerLast->points[j].z - pointSel.z);
 
-                        if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan) {//保证所处的scanID不同，对应paper
-                            if (pointSqDis < minPointSqDis2) {
-                            minPointSqDis2 = pointSqDis;
-                            minPointInd2 = j;
+                            if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan) {//保证所处的scanID不同，对应paper
+                                if (pointSqDis < minPointSqDis2) {
+                                minPointSqDis2 = pointSqDis;
+                                minPointInd2 = j;
+                                }
+                            }
+                            }
+                            for (int j = closestPointInd - 1; j >= 0; j--) {
+                            if (int(laserCloudCornerLast->points[j].intensity) < closestPointScan - 2.5) {
+                                break;
+                            }
+
+                            pointSqDis = (laserCloudCornerLast->points[j].x - pointSel.x) * 
+                                        (laserCloudCornerLast->points[j].x - pointSel.x) + 
+                                        (laserCloudCornerLast->points[j].y - pointSel.y) * 
+                                        (laserCloudCornerLast->points[j].y - pointSel.y) + 
+                                        (laserCloudCornerLast->points[j].z - pointSel.z) * 
+                                        (laserCloudCornerLast->points[j].z - pointSel.z);
+
+                            if (int(laserCloudCornerLast->points[j].intensity) < closestPointScan) {
+                                if (pointSqDis < minPointSqDis2) {
+                                minPointSqDis2 = pointSqDis;
+                                minPointInd2 = j;
+                                }
+                            }
                             }
                         }
-                        }
-                        for (int j = closestPointInd - 1; j >= 0; j--) {
-                        if (int(laserCloudCornerLast->points[j].intensity) < closestPointScan - 2.5) {
-                            break;
-                        }
 
-                        pointSqDis = (laserCloudCornerLast->points[j].x - pointSel.x) * 
-                                    (laserCloudCornerLast->points[j].x - pointSel.x) + 
-                                    (laserCloudCornerLast->points[j].y - pointSel.y) * 
-                                    (laserCloudCornerLast->points[j].y - pointSel.y) + 
-                                    (laserCloudCornerLast->points[j].z - pointSel.z) * 
-                                    (laserCloudCornerLast->points[j].z - pointSel.z);
-
-                        if (int(laserCloudCornerLast->points[j].intensity) < closestPointScan) {
-                            if (pointSqDis < minPointSqDis2) {
-                            minPointSqDis2 = pointSqDis;
-                            minPointInd2 = j;
-                            }
-                        }
-                        }
-                    }
-
-                    pointSearchCornerInd1[i] = closestPointInd;
-                    pointSearchCornerInd2[i] = minPointInd2;
+                        pointSearchCornerInd1[i] = closestPointInd;
+                        pointSearchCornerInd2[i] = minPointInd2;
                     }
 
                     if (pointSearchCornerInd2[i] >= 0) {
@@ -214,7 +210,8 @@ class laserOdometry{
 
                     float s = 1;
                     if (iterCount >= 5) {
-                        s = 1 - 1.8 * fabs(ld2);//就是个权重，Loss越小权重越大
+                        s = 1 - 1.8 * fabs(ld2)/ sqrt(sqrt(pointSel.x * pointSel.x
+                        + pointSel.y * pointSel.y + pointSel.z * pointSel.z));//就是个权重，Loss越小权重越大
                     }
 
                     coeff.x = s * la;
@@ -473,7 +470,7 @@ class laserOdometry{
 
             float rx, ry, rz, tx, ty, tz;
             AccumulateRotation(transformSum[0], transformSum[1], transformSum[2], 
-                                -transform[0], -transform[1]*1.05 , -transform[2], rx, ry, rz);
+                                -transform[0], -transform[1]*1 , -transform[2], rx, ry, rz);
 
             float x1 = cos(rz) * (transform[3] - imuShiftFromStartX) 
                     - sin(rz) * (transform[4] - imuShiftFromStartY);

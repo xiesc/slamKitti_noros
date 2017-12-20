@@ -45,6 +45,12 @@ public:
              laserCloudCenDepth = 10;
             memset(transformSum,0,sizeof(transformSum));memset(transformIncre,0,sizeof(transformIncre));memset(transformTobeMapped,0,sizeof(transformTobeMapped));memset(transformBefMapped,0,sizeof(transformBefMapped));memset(transformAftMapped,0,sizeof(transformAftMapped));
             systemInit = true;
+                    for (int i = 0; i < laserCloudNum; i++) {
+                        laserCloudCornerArray[i].reset(new pcl::PointCloud<PointType>());
+                        laserCloudSurfArray[i].reset(new pcl::PointCloud<PointType>());
+                        laserCloudCornerArray2[i].reset(new pcl::PointCloud<PointType>());
+                        laserCloudSurfArray2[i].reset(new pcl::PointCloud<PointType>());
+                    }
         }
         
                 
@@ -54,14 +60,14 @@ public:
 
             laserMappingBack mappingBackValue;
 
-            if (systemInit){
-                memset(mappingBackValue.transformAftMapped,0,sizeof(mappingBackValue.transformAftMapped));
+            // if (systemInit){
+            //     memset(mappingBackValue.transformAftMapped,0,sizeof(mappingBackValue.transformAftMapped));
                 
-                    systemInit = false;
-                    return mappingBackValue;
+            //         systemInit = false;
+            //         return mappingBackValue;
 
 
-            };
+            // };
 
             laserCloudCornerLastHandler(odometryValueBack.laserCloudCornerLast);
             laserCloudSurfLastHandler(odometryValueBack.laserCloudSurfLast);
@@ -94,22 +100,14 @@ public:
         pcl::VoxelGrid<PointType> downSizeFilterMap;
         downSizeFilterMap.setLeafSize(0.3, 0.3, 0.3);//
 
-        for (int i = 0; i < laserCloudNum; i++) {
-            laserCloudCornerArray[i].reset(new pcl::PointCloud<PointType>());
-            laserCloudSurfArray[i].reset(new pcl::PointCloud<PointType>());
-            laserCloudCornerArray2[i].reset(new pcl::PointCloud<PointType>());
-            laserCloudSurfArray2[i].reset(new pcl::PointCloud<PointType>());
-        }
+
 
         int frameCount = stackFrameNum - 1;
         int mapFrameCount = mapFrameNum - 1;
         
         
 
-            if (newLaserCloudCornerLast && newLaserCloudSurfLast && newLaserCloudFullRes && newLaserOdometry &&
-                fabs(timeLaserCloudCornerLast - timeLaserOdometry) < 0.005 &&
-                fabs(timeLaserCloudSurfLast - timeLaserOdometry) < 0.005 &&
-                fabs(timeLaserCloudFullRes - timeLaserOdometry) < 0.005) {
+            if (newLaserCloudCornerLast && newLaserCloudSurfLast && newLaserCloudFullRes && newLaserOdometry ) {
             newLaserCloudCornerLast = false;
             newLaserCloudSurfLast = false;
             newLaserCloudFullRes = false;
@@ -317,7 +315,7 @@ public:
 
                 //以上部分其实就在剪切地图，每次距离变远以后，就整个cube平移。最开始激光雷达位于坐标原点，
                 // 实际上对应cube索引是第10 5 10。 当激光雷达位置距离边缘小于3个cube以后，整个大cube向
-                //该方向平移一个cube（或几个，直到距离边缘小于3个为止），同理中间位置的索引也跟着变，这样
+                //该方向平移一个cube（或几个，直到距离边缘大于3个为止），同理中间位置的索引也跟着变，这样
                 // 下一次计算的时候不会出现问题。也就是平移过一次以后，如果位于原点的值在进行计算对应的就不是
                 //10 5 10了，有可能是9 5 10。
 
@@ -418,7 +416,7 @@ public:
                 kdtreeCornerFromMap->setInputCloud(laserCloudCornerFromMap);
                 kdtreeSurfFromMap->setInputCloud(laserCloudSurfFromMap);
 
-                for (int iterCount = 0; iterCount < 10; iterCount++) {
+                for (int iterCount = 0; iterCount < 15; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
 
@@ -514,7 +512,8 @@ public:
                         pointProj.y -= lb * ld2;
                         pointProj.z -= lc * ld2;
 
-                        float s = 1 - 0.9 * fabs(ld2);
+                        float s = 1 - 0.9 * fabs(ld2)/sqrt(sqrt(pointSel.x * pointSel.x
+                        + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
 
                         coeff.x = s * la;
                         coeff.y = s * lb;
@@ -572,7 +571,7 @@ public:
                         pointProj.z -= pc * pd2;
 
                         float s = 1 - 0.9 * fabs(pd2) / sqrt(sqrt(pointSel.x * pointSel.x
-                                + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+                        + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
 
                         coeff.x = s * pa;
                         coeff.y = s * pb;
@@ -1038,11 +1037,6 @@ private:
         void laserOdometryHandler(const float* transformSum2)
         {
             
-
-            
-            
-          
-
             transformSum[0] = transformSum2[0];
             transformSum[1] = transformSum2[1];
             transformSum[2] = transformSum2[2];
