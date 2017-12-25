@@ -64,15 +64,17 @@ int main(int argc, char* args[]){
 	getFiles(args[1], files);
 	
 	std::ofstream outfile;
+	std::ofstream outfile2;
 	int i;
 	char filename[50] = {0};
 	string p;
 
 	outfile.open (p.assign(args[1]).append("/../pose.txt").c_str());
+	outfile2.open (p.assign(args[1]).append("/../pose_bef.txt").c_str());
 	int num_id=0;
  	
     pcl::visualization::CloudViewer viewer ("mapping viewer");  
-       
+ 
 
 
     scanRegistration scanner;
@@ -146,6 +148,7 @@ int main(int argc, char* args[]){
 		 viewer.showCloud(mappingBackValue.laserCloudSurround);  
 
 		outfile<<mappingBackValue.transformAftMapped[0]<<" "<<mappingBackValue.transformAftMapped[1]<<" "<<mappingBackValue.transformAftMapped[2]<<" "<<mappingBackValue.transformAftMapped[3]<<" "<<mappingBackValue.transformAftMapped[4]<<" "<<mappingBackValue.transformAftMapped[5]<<endl;
+		outfile2<<odometryValueBack.transformSum[0]<<" "<<odometryValueBack.transformSum[1]<<" "<<odometryValueBack.transformSum[2]<<" "<<odometryValueBack.transformSum[3]<<" "<<odometryValueBack.transformSum[4]<<" "<<odometryValueBack.transformSum[5]<<endl;
 
     	// // Save DoN features
 		// writer.write<PointXYZI> (outfile, *points, false);

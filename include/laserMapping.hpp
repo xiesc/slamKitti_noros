@@ -319,6 +319,7 @@ public:
                 // 下一次计算的时候不会出现问题。也就是平移过一次以后，如果位于原点的值在进行计算对应的就不是
                 //10 5 10了，有可能是9 5 10。
 
+                //centerCube 对应的是预测激光雷达在的位置对应的索引
 
                 int laserCloudValidNum = 0;
                 int laserCloudSurroundNum = 0;
@@ -402,11 +403,15 @@ public:
                 laserCloudCornerStack->clear();
                 downSizeFilterCorner.setInputCloud(laserCloudCornerStack2);
                 downSizeFilterCorner.filter(*laserCloudCornerStack);
+                // *laserCloudCornerStack=*laserCloudCornerStack2;
+
                 int laserCloudCornerStackNum = laserCloudCornerStack->points.size();
 
                 laserCloudSurfStack->clear();
                 downSizeFilterSurf.setInputCloud(laserCloudSurfStack2);
                 downSizeFilterSurf.filter(*laserCloudSurfStack);
+
+                // *laserCloudSurfStack = *laserCloudSurfStack2;
                 int laserCloudSurfStackNum = laserCloudSurfStack->points.size();
 
                 laserCloudCornerStack2->clear();
@@ -512,8 +517,11 @@ public:
                         pointProj.y -= lb * ld2;
                         pointProj.z -= lc * ld2;
 
-                        float s = 1 - 0.9 * fabs(ld2)/sqrt(sqrt(pointSel.x * pointSel.x
-                        + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+                        // float s = 1 - 0.9 * fabs(ld2)/sqrt(sqrt(pointSel.x * pointSel.x
+                        // + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+
+                        float s = 1 - 0.9 * fabs(ld2);
+
 
                         coeff.x = s * la;
                         coeff.y = s * lb;
@@ -572,6 +580,8 @@ public:
 
                         float s = 1 - 0.9 * fabs(pd2) / sqrt(sqrt(pointSel.x * pointSel.x
                         + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+
+                        // float s = 1 - 0.9 * fabs(pd2);
 
                         coeff.x = s * pa;
                         coeff.y = s * pb;

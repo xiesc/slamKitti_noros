@@ -285,7 +285,7 @@ OpenCV_3RDPARTY_LIB_DIR_OPT:PATH=
 OpenCV_CONFIG_PATH:FILEPATH=/home/xiesc/opencv-2.4.9/cmake
 
 //The directory containing a CMake configuration file for OpenCV.
-OpenCV_DIR:PATH=/home/xiesc/opencv-2.4.9/cmake
+OpenCV_DIR:PATH=/opt/ros/kinetic/share/OpenCV-3.3.1
 
 //Path where debug OpenCV libraries are located
 OpenCV_LIB_DIR_DBG:PATH=
@@ -716,6 +716,8 @@ EIGEN_INCLUDE_DIR-ADVANCED:INTERNAL=1
 FIND_PACKAGE_MESSAGE_DETAILS_Eigen:INTERNAL=[/usr/include/eigen3][v()]
 //Details about finding FLANN
 FIND_PACKAGE_MESSAGE_DETAILS_FLANN:INTERNAL=[/usr/lib/x86_64-linux-gnu/libflann_cpp.so][/usr/include][v()]
+//Details about finding OpenCV
+FIND_PACKAGE_MESSAGE_DETAILS_OpenCV:INTERNAL=[/opt/ros/kinetic][v3.3.1()]
 //Details about finding OpenNI
 FIND_PACKAGE_MESSAGE_DETAILS_OpenNI:INTERNAL=[/usr/lib/libOpenNI.so][/usr/include/ni][v()]
 //Details about finding PCL

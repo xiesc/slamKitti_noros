@@ -412,6 +412,7 @@ class scanRegistration{
             downSizeFilter.filter(surfPointsLessFlatScanDS);
 
             surfPointsLessFlat += surfPointsLessFlatScanDS;
+            // surfPointsLessFlat += *surfPointsLessFlatScan;
         }
 
 

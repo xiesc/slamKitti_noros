@@ -210,8 +210,10 @@ class laserOdometry{
 
                     float s = 1;
                     if (iterCount >= 5) {
-                        s = 1 - 1.8 * fabs(ld2)/ sqrt(sqrt(pointSel.x * pointSel.x
-                        + pointSel.y * pointSel.y + pointSel.z * pointSel.z));//就是个权重，Loss越小权重越大
+                        // s = 1 - 1.8 * fabs(ld2)/ sqrt(sqrt(pointSel.x * pointSel.x
+                        // + pointSel.y * pointSel.y + pointSel.z * pointSel.z));//就是个权重，Loss越小权重越大
+                                              
+                     s = 1 - 1.8 * fabs(ld2);
                     }
 
                     coeff.x = s * la;
@@ -322,12 +324,14 @@ class laserOdometry{
                     if (iterCount >= 5) {
                         s = 1 - 1.8 * fabs(pd2) / sqrt(sqrt(pointSel.x * pointSel.x
                         + pointSel.y * pointSel.y + pointSel.z * pointSel.z));
+
+                        // s = 1 - 1.8 * fabs(pd2) ;
                     }
 
                     coeff.x = s * pa;
                     coeff.y = s * pb;
                     coeff.z = s * pc;//分别是三个偏导数
-                    coeff.intensity = s * pd2;//点到直线的距离误差
+                    coeff.intensity = s * pd2;
 
                     if (s > 0.1 && pd2 != 0) {
                         laserCloudOri->push_back(surfPointsFlat->points[i]);
@@ -470,7 +474,7 @@ class laserOdometry{
 
             float rx, ry, rz, tx, ty, tz;
             AccumulateRotation(transformSum[0], transformSum[1], transformSum[2], 
-                                -transform[0], -transform[1]*1 , -transform[2], rx, ry, rz);
+                                -transform[0], -transform[1]*1.05 , -transform[2], rx, ry, rz);
 
             float x1 = cos(rz) * (transform[3] - imuShiftFromStartX) 
                     - sin(rz) * (transform[4] - imuShiftFromStartY);

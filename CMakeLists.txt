@@ -14,7 +14,7 @@ project(loam_kitti)
 FIND_PACKAGE( PCL REQUIRED )
 
 # 增加opencv的依赖
-FIND_PACKAGE( OpenCV 2.4 REQUIRED )
+FIND_PACKAGE( OpenCV  REQUIRED )
 
 
 
