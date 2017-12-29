@@ -298,7 +298,7 @@ class laserOdometry{
                     tripod1 = laserCloudSurfLast->points[pointSearchSurfInd1[i]];
                     tripod2 = laserCloudSurfLast->points[pointSearchSurfInd2[i]];
                     tripod3 = laserCloudSurfLast->points[pointSearchSurfInd3[i]];
-
+                    //pa pb pc实际上就对应着平面法向量的三个分量
                     float pa = (tripod2.y - tripod1.y) * (tripod3.z - tripod1.z) 
                             - (tripod3.y - tripod1.y) * (tripod2.z - tripod1.z);
                     float pb = (tripod2.z - tripod1.z) * (tripod3.x - tripod1.x) 
@@ -413,28 +413,28 @@ class laserOdometry{
                 matAtB = matAt * matB;
                 cv::solve(matAtA, matAtB, matX, cv::DECOMP_QR);
 
-                if (iterCount == 0) {
-                    cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
-                    cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
-                    cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
+                // if (iterCount == 0) {
+                //     cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
+                //     cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
+                //     cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
 
-                    cv::eigen(matAtA, matE, matV);
-                    matV.copyTo(matV2);
+                //     cv::eigen(matAtA, matE, matV);
+                //     matV.copyTo(matV2);
 
-                    isDegenerate = false;
-                    float eignThre[6] = {10, 10, 10, 10, 10, 10};
-                    for (int i = 5; i >= 0; i--) {
-                    if (matE.at<float>(0, i) < eignThre[i]) {
-                        for (int j = 0; j < 6; j++) {
-                        matV2.at<float>(i, j) = 0;
-                        }
-                        isDegenerate = true;
-                    } else {
-                        break;
-                    }
-                    }
-                    matP = matV.inv() * matV2;
-                }
+                //     isDegenerate = false;
+                //     float eignThre[6] = {10, 10, 10, 10, 10, 10};
+                //     for (int i = 5; i >= 0; i--) {
+                //     if (matE.at<float>(0, i) < eignThre[i]) {
+                //         for (int j = 0; j < 6; j++) {
+                //         matV2.at<float>(i, j) = 0;
+                //         }
+                //         isDegenerate = true;
+                //     } else {
+                //         break;
+                //     }
+                //     }
+                //     matP = matV.inv() * matV2;
+                // }
 
                 if (isDegenerate) {
                     cv::Mat matX2(6, 1, CV_32F, cv::Scalar::all(0));
@@ -473,14 +473,15 @@ class laserOdometry{
             // ROS_INFO("%f",transform[3]);
 
             float rx, ry, rz, tx, ty, tz;
+            transform[0] = transform[0]*0.5;
             AccumulateRotation(transformSum[0], transformSum[1], transformSum[2], 
-                                -transform[0], -transform[1]*1.05 , -transform[2], rx, ry, rz);
+                                -transform[0], -transform[1]*1 , -transform[2], rx, ry, rz);
 
-            float x1 = cos(rz) * (transform[3] - imuShiftFromStartX) 
-                    - sin(rz) * (transform[4] - imuShiftFromStartY);
-            float y1 = sin(rz) * (transform[3] - imuShiftFromStartX) 
-                    + cos(rz) * (transform[4] - imuShiftFromStartY);
-            float z1 = transform[5] * 1.05 - imuShiftFromStartZ;
+            float x1 = cos(rz) * (transform[3] ) 
+                    - sin(rz) * (transform[4] );
+            float y1 = sin(rz) * (transform[3] ) 
+                    + cos(rz) * (transform[4] );
+            float z1 = transform[5] * 1 ;
 
             float x2 = x1;
             float y2 = cos(rx) * y1 - sin(rx) * z1;
@@ -632,14 +633,20 @@ class laserOdometry{
 
         void TransformToStart(PointType const * const pi, PointType * const po)
         {
-        float s = 10 * (pi->intensity - int(pi->intensity));//？？这里的10其实是跟0.1对应的，而不是单纯的为了求十分位的数
+        // float s = 10 * (pi->intensity - int(pi->intensity));//？？这里的10其实是跟0.1对应的，而不是单纯的为了求十分位的数
+        // float rx = s * transform[0];
+        // float ry = s * transform[1];
+        // float rz = s * transform[2];
+        // float tx = s * transform[3];
+        // float ty = s * transform[4];
+        // float tz = s * transform[5];
 
-        float rx = s * transform[0];
-        float ry = s * transform[1];
-        float rz = s * transform[2];
-        float tx = s * transform[3];
-        float ty = s * transform[4];
-        float tz = s * transform[5];
+        float rx = transform[0];
+        float ry = transform[1];
+        float rz = transform[2];
+        float tx = transform[3];
+        float ty = transform[4];
+        float tz = transform[5];
 
         float x1 = cos(rz) * (pi->x - tx) + sin(rz) * (pi->y - ty);
         float y1 = -sin(rz) * (pi->x - tx) + cos(rz) * (pi->y - ty);
@@ -657,72 +664,78 @@ class laserOdometry{
 
         void TransformToEnd(PointType const * const pi, PointType * const po)
         {
-        float s = 10 * (pi->intensity - int(pi->intensity));
-
-        float rx = s * transform[0];
-        float ry = s * transform[1];
-        float rz = s * transform[2];
-        float tx = s * transform[3];
-        float ty = s * transform[4];
-        float tz = s * transform[5];
-
-        float x1 = cos(rz) * (pi->x - tx) + sin(rz) * (pi->y - ty);
-        float y1 = -sin(rz) * (pi->x - tx) + cos(rz) * (pi->y - ty);
-        float z1 = (pi->z - tz);
-
-        float x2 = x1;
-        float y2 = cos(rx) * y1 + sin(rx) * z1;
-        float z2 = -sin(rx) * y1 + cos(rx) * z1;
-
-        float x3 = cos(ry) * x2 - sin(ry) * z2;
-        float y3 = y2;
-        float z3 = sin(ry) * x2 + cos(ry) * z2;
-
-        rx = transform[0];
-        ry = transform[1];
-        rz = transform[2];
-        tx = transform[3];
-        ty = transform[4];
-        tz = transform[5];
-
-        float x4 = cos(ry) * x3 + sin(ry) * z3;
-        float y4 = y3;
-        float z4 = -sin(ry) * x3 + cos(ry) * z3;
-
-        float x5 = x4;
-        float y5 = cos(rx) * y4 - sin(rx) * z4;
-        float z5 = sin(rx) * y4 + cos(rx) * z4;
-
-        float x6 = cos(rz) * x5 - sin(rz) * y5 + tx;
-        float y6 = sin(rz) * x5 + cos(rz) * y5 + ty;
-        float z6 = z5 + tz;
-
-        float x7 = cos(imuRollStart) * (x6 - imuShiftFromStartX) 
-                - sin(imuRollStart) * (y6 - imuShiftFromStartY);
-        float y7 = sin(imuRollStart) * (x6 - imuShiftFromStartX) 
-                + cos(imuRollStart) * (y6 - imuShiftFromStartY);
-        float z7 = z6 - imuShiftFromStartZ;
-
-        float x8 = x7;
-        float y8 = cos(imuPitchStart) * y7 - sin(imuPitchStart) * z7;
-        float z8 = sin(imuPitchStart) * y7 + cos(imuPitchStart) * z7;
-
-        float x9 = cos(imuYawStart) * x8 + sin(imuYawStart) * z8;
-        float y9 = y8;
-        float z9 = -sin(imuYawStart) * x8 + cos(imuYawStart) * z8;
-
-        float x10 = cos(imuYawLast) * x9 - sin(imuYawLast) * z9;
-        float y10 = y9;
-        float z10 = sin(imuYawLast) * x9 + cos(imuYawLast) * z9;
-
-        float x11 = x10;
-        float y11 = cos(imuPitchLast) * y10 + sin(imuPitchLast) * z10;
-        float z11 = -sin(imuPitchLast) * y10 + cos(imuPitchLast) * z10;
-
-        po->x = cos(imuRollLast) * x11 + sin(imuRollLast) * y11;
-        po->y = -sin(imuRollLast) * x11 + cos(imuRollLast) * y11;
-        po->z = z11;
+        po->x = pi->x;
+        po->y = pi->y;
+        po->z = pi->z;
         po->intensity = int(pi->intensity);
+
+        // float s = 10 * (pi->intensity - int(pi->intensity));
+        // float s = 1;
+
+        // float rx = s * transform[0];
+        // float ry = s * transform[1];
+        // float rz = s * transform[2];
+        // float tx = s * transform[3];
+        // float ty = s * transform[4];
+        // float tz = s * transform[5];
+
+        // float x1 = cos(rz) * (pi->x - tx) + sin(rz) * (pi->y - ty);
+        // float y1 = -sin(rz) * (pi->x - tx) + cos(rz) * (pi->y - ty);
+        // float z1 = (pi->z - tz);
+
+        // float x2 = x1;
+        // float y2 = cos(rx) * y1 + sin(rx) * z1;
+        // float z2 = -sin(rx) * y1 + cos(rx) * z1;
+
+        // float x3 = cos(ry) * x2 - sin(ry) * z2;
+        // float y3 = y2;
+        // float z3 = sin(ry) * x2 + cos(ry) * z2;
+
+        // rx = transform[0];
+        // ry = transform[1];
+        // rz = transform[2];
+        // tx = transform[3];
+        // ty = transform[4];
+        // tz = transform[5];
+
+        // float x4 = cos(ry) * x3 + sin(ry) * z3;
+        // float y4 = y3;
+        // float z4 = -sin(ry) * x3 + cos(ry) * z3;
+
+        // float x5 = x4;
+        // float y5 = cos(rx) * y4 - sin(rx) * z4;
+        // float z5 = sin(rx) * y4 + cos(rx) * z4;
+
+        // float x6 = cos(rz) * x5 - sin(rz) * y5 + tx;
+        // float y6 = sin(rz) * x5 + cos(rz) * y5 + ty;
+        // float z6 = z5 + tz;
+
+        // float x7 = cos(imuRollStart) * (x6 - imuShiftFromStartX) 
+        //         - sin(imuRollStart) * (y6 - imuShiftFromStartY);
+        // float y7 = sin(imuRollStart) * (x6 - imuShiftFromStartX) 
+        //         + cos(imuRollStart) * (y6 - imuShiftFromStartY);
+        // float z7 = z6 - imuShiftFromStartZ;
+
+        // float x8 = x7;
+        // float y8 = cos(imuPitchStart) * y7 - sin(imuPitchStart) * z7;
+        // float z8 = sin(imuPitchStart) * y7 + cos(imuPitchStart) * z7;
+
+        // float x9 = cos(imuYawStart) * x8 + sin(imuYawStart) * z8;
+        // float y9 = y8;
+        // float z9 = -sin(imuYawStart) * x8 + cos(imuYawStart) * z8;
+
+        // float x10 = cos(imuYawLast) * x9 - sin(imuYawLast) * z9;
+        // float y10 = y9;
+        // float z10 = sin(imuYawLast) * x9 + cos(imuYawLast) * z9;
+
+        // float x11 = x10;
+        // float y11 = cos(imuPitchLast) * y10 + sin(imuPitchLast) * z10;
+        // float z11 = -sin(imuPitchLast) * y10 + cos(imuPitchLast) * z10;
+
+        // po->x = cos(imuRollLast) * x11 + sin(imuRollLast) * y11;
+        // po->y = -sin(imuRollLast) * x11 + cos(imuRollLast) * y11;
+        // po->z = z11;
+        // po->intensity = int(pi->intensity);
         }
         
 

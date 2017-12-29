@@ -35,6 +35,7 @@ public:
              kdtreeSurfFromMap(new pcl::KdTreeFLANN<PointType>())
         
         {
+            outfile2.open ("/home/xiesc/cornerLog.txt");outfile.open ("/home/xiesc/SurfLog.txt");
             num_id = 0;num_id2 = 0;timeLaserCloudCornerLast = 0;timeLaserCloudSurfLast = 0;timeLaserCloudSurfLast = 0;timeLaserCloudFullRes = 0;
             timeLaserOdometry = 0;  newLaserCloudCornerLast = false;
              newLaserCloudSurfLast = false;
@@ -80,8 +81,8 @@ public:
 
         PointType pointOri, pointSel, pointProj, coeff;
 
-        cv::Mat matA0(5, 3, CV_32F, cv::Scalar::all(0));
-        cv::Mat matB0(5, 1, CV_32F, cv::Scalar::all(-1));
+        cv::Mat matA0(10, 3, CV_32F, cv::Scalar::all(0));
+        cv::Mat matB0(10, 1, CV_32F, cv::Scalar::all(-1));
         cv::Mat matX0(3, 1, CV_32F, cv::Scalar::all(0));
 
         cv::Mat matA1(3, 3, CV_32F, cv::Scalar::all(0));
@@ -417,15 +418,29 @@ public:
                 laserCloudCornerStack2->clear();
                 laserCloudSurfStack2->clear();
 
+                         int num_corner = 0;
+                        int num_surf = 0;
+
                 if (laserCloudCornerFromMapNum > 10 && laserCloudSurfFromMapNum > 100) {
                 kdtreeCornerFromMap->setInputCloud(laserCloudCornerFromMap);
                 kdtreeSurfFromMap->setInputCloud(laserCloudSurfFromMap);
-
-                for (int iterCount = 0; iterCount < 15; iterCount++) {
+                        
+         
+                
+                for (int iterCount = 0; iterCount < 10; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
+                       
+                        num_corner=0;
+                        num_surf=0;
 
                     for (int i = 0; i < laserCloudCornerStackNum; i++) {
+                          
+                            // cerr<<"3"<<","<<i<<laserCloudCornerStackNum<<endl;
+                            
+                           
+                            
+
                     pointOri = laserCloudCornerStack->points[i];
                     pointAssociateToMap(&pointOri, &pointSel);
                     kdtreeCornerFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
@@ -531,23 +546,46 @@ public:
                         if (s > 0.1) {
                             laserCloudOri->push_back(pointOri);
                             coeffSel->push_back(coeff);
+                              num_corner++;
+                            //   outfile2<< iterCount<<","<<num_corner++<<","<<s<<endl;
+                       
                         }
                         }
                     }
                     }
 
                     for (int i = 0; i < laserCloudSurfStackNum; i++) {
+                            
+                            // cerr<<"3"<<","<<i<<laserCloudCornerStackNum<<endl;
+                            
+                            
+                           
+
                     pointOri = laserCloudSurfStack->points[i];
                     pointAssociateToMap(&pointOri, &pointSel); 
-                    kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                    kdtreeSurfFromMap->nearestKSearch(pointSel, 10, pointSearchInd, pointSearchSqDis);
 
-                    if (pointSearchSqDis[4] < 1.0) {
-                        for (int j = 0; j < 5; j++) {
+                    if (pointSearchSqDis[9] < 1.0) {
+                        for (int j = 0; j < 10; j++) {
                         matA0.at<float>(j, 0) = laserCloudSurfFromMap->points[pointSearchInd[j]].x;
                         matA0.at<float>(j, 1) = laserCloudSurfFromMap->points[pointSearchInd[j]].y;
                         matA0.at<float>(j, 2) = laserCloudSurfFromMap->points[pointSearchInd[j]].z;
                         }
                         cv::solve(matA0, matB0, matX0, cv::DECOMP_QR);
+                        
+                        cv::Mat AB;
+                        AB = matA0*matX0;
+                        // cerr<<AB<<endl;
+                        bool flag_planer = true;
+                        for (int ii =0 ;ii<10;ii++){
+                            if (fabs(AB.at<float>(ii,0)+1)>0.05){
+                                flag_planer = false;
+                                break;
+                            }
+                        }
+                        //  cerr<<flag_planer<<endl;
+                        if (!flag_planer)
+                            break;
 
                         float pa = matX0.at<float>(0, 0);
                         float pb = matX0.at<float>(1, 0);
@@ -561,7 +599,7 @@ public:
                         pd /= ps;
 
                         bool planeValid = true;
-                        for (int j = 0; j < 5; j++) {
+                        for (int j = 0; j < 10; j++) {
                         if (fabs(pa * laserCloudSurfFromMap->points[pointSearchInd[j]].x +
                             pb * laserCloudSurfFromMap->points[pointSearchInd[j]].y +
                             pc * laserCloudSurfFromMap->points[pointSearchInd[j]].z + pd) > 0.2) {
@@ -591,6 +629,10 @@ public:
                         if (s > 0.1) {
                             laserCloudOri->push_back(pointOri);
                             coeffSel->push_back(coeff);
+                            
+                            num_surf++;
+                            //  outfile<< iterCount<<","<<num_surf++<<","<<s<<endl;
+                             
                         }
                         }
                     }
@@ -644,30 +686,31 @@ public:
                     matAtB = matAt * matB;
                     cv::solve(matAtA, matAtB, matX, cv::DECOMP_QR);
 
-                    if (iterCount == 0) {
-                    cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
-                    cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
-                    cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
+                    // if (iterCount == 0) {
+                    // cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
+                    // cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
+                    // cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
 
-                    cv::eigen(matAtA, matE, matV);
-                    matV.copyTo(matV2);
+                    // cv::eigen(matAtA, matE, matV);
+                    // matV.copyTo(matV2);
 
-                    isDegenerate = false;
-                    float eignThre[6] = {100, 100, 100, 100, 100, 100};
-                    for (int i = 5; i >= 0; i--) {
-                        if (matE.at<float>(0, i) < eignThre[i]) {
-                        for (int j = 0; j < 6; j++) {
-                            matV2.at<float>(i, j) = 0;
-                        }
-                        isDegenerate = true;
-                        } else {
-                        break;
-                        }
-                    }
-                    matP = matV.inv() * matV2;
-                    }
+                    // isDegenerate = false;
+                    // float eignThre[6] = {100, 100, 100, 100, 100, 100};
+                    // for (int i = 5; i >= 0; i--) {
+                    //     if (matE.at<float>(0, i) < eignThre[i]) {
+                    //     for (int j = 0; j < 6; j++) {
+                    //         matV2.at<float>(i, j) = 0;
+                    //     }
+                    //     isDegenerate = true;
+                    //     } else {
+                    //     break;
+                    //     }
+                    // }
+                    // matP = matV.inv() * matV2;
+                    // }
 
                     if (isDegenerate) {
+                        cerr<<"error"<<endl;
                     cv::Mat matX2(6, 1, CV_32F, cv::Scalar::all(0));
                     matX.copyTo(matX2);
                     matX = matP * matX2;
@@ -696,6 +739,71 @@ public:
 
                 transformUpdate();
                 }
+                
+
+                
+                
+                if (num_id !=0){
+                pcl::PointCloud<PointType> FeaturesPointsCloudSurf;
+                pcl::PointCloud<PointType> FeaturesPointsCloudCorner;
+                pcl::PointCloud<PointType> FeaturesPointsCloudRegistrationSurf;
+                pcl::PointCloud<PointType> FeaturesPointsCloudRegistrationCorner;
+
+                int laserCloudSelNum = laserCloudOri->points.size();
+                cerr<<laserCloudSelNum<<endl;
+                // cerr<<"1"<<laserCloudSelNum<<endl;
+                for (int i = 0;i<laserCloudSelNum;i++){
+                        pointAssociateToMap(&laserCloudOri->points[i], &pointSel);
+                       
+                        if (i <num_corner){
+                            FeaturesPointsCloudCorner.push_back(pointSel);
+                            kdtreeCornerFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                            for(int j = 0 ;j<5;j++){
+                            FeaturesPointsCloudRegistrationCorner.push_back(laserCloudCornerFromMap->points[pointSearchInd[j]]);
+                            }
+                        }
+                        else{
+                            FeaturesPointsCloudSurf.push_back(pointSel);
+                            kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                            for(int j = 0 ;j<5;j++){   
+                            FeaturesPointsCloudRegistrationSurf.push_back(laserCloudSurfFromMap->points[pointSearchInd[j]]);
+                            }   
+
+
+                        }
+                
+                }
+                    std::stringstream filename;
+                    filename << "/home/xiesc/testpcd_FeaturesPointsCloudCorner/"<<num_id<<".pcd";
+                    
+                    pcl::io::savePCDFileASCII (filename.str(), FeaturesPointsCloudCorner);
+                    
+                    if (FeaturesPointsCloudSurf.size()>0){
+                    std::stringstream filename4;
+                    filename4 << "/home/xiesc/testpcd_FeaturesPointsCloudSurf/"<<num_id<<".pcd";
+                    
+                    pcl::io::savePCDFileASCII (filename4.str(), FeaturesPointsCloudSurf);}
+                            
+                    std::stringstream filename2;
+                    filename2 << "/home/xiesc/testpcd_FeaturesPointsCloudRegistrationCorner/"<<num_id<<".pcd";
+                    
+                    pcl::io::savePCDFileASCII (filename2.str(), FeaturesPointsCloudRegistrationCorner);
+                    if (FeaturesPointsCloudSurf.size()>0){
+                    std::stringstream filename3;
+                    filename3 << "/home/xiesc/testpcd_FeaturesPointsCloudRegistrationSurf/"<<num_id<<".pcd";
+                    
+                    pcl::io::savePCDFileASCII (filename3.str(), FeaturesPointsCloudRegistrationSurf);}
+                    
+
+                    std::stringstream filename5;
+                    filename5 << "/home/xiesc/testpcd_Error/"<<num_id<<".pcd";
+                    
+                    pcl::io::savePCDFileASCII (filename5.str(), *coeffSel);
+                   
+                     
+
+                }
+
 
                 for (int i = 0; i < laserCloudCornerStackNum; i++) {
                 pointAssociateToMap(&laserCloudCornerStack->points[i], &pointSel);
@@ -768,15 +876,15 @@ public:
                 }
 
                 laserCloudSurround->clear();
-                downSizeFilterCorner.setInputCloud(laserCloudSurround2);
-                downSizeFilterCorner.filter(*laserCloudSurround);
+                downSizeFilterMap.setInputCloud(laserCloudSurround2);
+                downSizeFilterMap.filter(*laserCloudSurround);
 
 
 
                 mappingBackValue.laserCloudSurround = laserCloudSurround;
 
                 
-                outfile<<num_id2<<",cloud"<<std::endl;
+                // outfile<<num_id2<<",cloud"<<std::endl;
                 num_id2++;
 
                 }
@@ -796,7 +904,7 @@ public:
                 mappingBackValue.transformAftMapped[5]=transformAftMapped[5];
 
 
-                outfile<<num_id<<",odometry"<<std::endl;
+                // outfile<<num_id<<",odometry"<<std::endl;
                 num_id++;
 
  
@@ -815,6 +923,7 @@ public:
 
 private:
     std::ofstream outfile;
+    std::ofstream outfile2;
     int num_id ;
     int num_id2 ;
     bool systemInit;

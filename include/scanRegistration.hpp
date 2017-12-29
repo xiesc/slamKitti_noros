@@ -159,10 +159,10 @@ class scanRegistration{
         }
 
 
-        // std::stringstream filename;
-        // filename << "/home/xiesc/testpcd_layer/"<<num_id<<".pcd";
+        std::stringstream filename;
+        filename << "/home/xiesc/testpcd_layer/"<<num_id<<".pcd";
         
-        //  pcl::io::savePCDFileASCII (filename.str(), *laserCloud);
+         pcl::io::savePCDFileASCII (filename.str(), *laserCloud);
             
 
 
@@ -191,6 +191,7 @@ class scanRegistration{
             cloudCurvature[i] = diffX * diffX + diffY * diffY + diffZ * diffZ;
             cloudSortInd[i] = i;
             cloudNeighborPicked[i] = 0;
+            cloudNeighborPickedForCorner[i]=0;
             cloudLabel[i] = 0;
 
             if (int(laserCloud->points[i].intensity) != scanCount) {
@@ -265,25 +266,30 @@ class scanRegistration{
             if (diff > 0.0002 * dis && diff2 > 0.0002 * dis) {
             cloudNeighborPicked[i] = 1;
             }
+            //xie:如果距离两边都很远就去掉这个点
             
         //用于Kitti数据集去掉扰动点
 
             if (laserCloud->points[i].x>-0.5 && laserCloud->points[i].x <0.5){
-            cloudNeighborPicked[i] = 1;
+            cloudNeighborPickedForCorner[i] = 1;
             }
             float temp_range;
             temp_range = sqrt (pow(laserCloud->points[i].x,2)+pow(laserCloud->points[i].y,2)+pow(laserCloud->points[i].z,2));
             if (laserCloud->points[i].y>-1.8 && laserCloud->points[i].y <-1.3 && temp_range<7.3){
-            cloudNeighborPicked[i] = 1;
+            cloudNeighborPickedForCorner[i] = 1;
             }
 
-
-
+            // if (laserCloud->points[i].x>-4 && laserCloud->points[i].x <4 && laserCloud->points[i].y<-2){
+            // cloudNeighborPicked[i] = 1;
+            // }
+            // if (laserCloud->points[i].y<-11){
+            // cloudNeighborPicked[i] = 1;
+            // }    
 
 
 
         }
-        //xie:如果距离两边都很远就去掉这个点
+        
 
         pcl::PointCloud<PointType> cornerPointsSharp;
         pcl::PointCloud<PointType> cornerPointsLessSharp;
@@ -309,100 +315,120 @@ class scanRegistration{
             int largestPickedNum = 0;
             for (int k = ep; k >= sp; k--) {
                 int ind = cloudSortInd[k];
-                if (cloudNeighborPicked[ind] == 0 &&
-                    cloudCurvature[ind] > 0.1) {
-                
-                largestPickedNum++;
-                if (largestPickedNum <= 2) {
-                    cloudLabel[ind] = 2;
-                    cornerPointsSharp.push_back(laserCloud->points[ind]);
-                    cornerPointsLessSharp.push_back(laserCloud->points[ind]);
-                } else if (largestPickedNum <= 20) {
-                    cloudLabel[ind] = 1;
-                    cornerPointsLessSharp.push_back(laserCloud->points[ind]);
-                } else {
-                    break;
-                }
-        //下面两个循环让附近的5个点不能被选，如果离得很远的话就可以（break）
-                cloudNeighborPicked[ind] = 1;
-                for (int l = 1; l <= 5; l++) {
-                    float diffX = laserCloud->points[ind + l].x 
-                                - laserCloud->points[ind + l - 1].x;
-                    float diffY = laserCloud->points[ind + l].y 
-                                - laserCloud->points[ind + l - 1].y;
-                    float diffZ = laserCloud->points[ind + l].z 
-                                - laserCloud->points[ind + l - 1].z;
-                    if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
-                    break;
+                if (cloudNeighborPicked[ind] == 0 && cloudCurvature[ind] > 5 &&cloudNeighborPickedForCorner[ind]==0) {
+                   
+                    
+                    largestPickedNum++;
+                    if (largestPickedNum <= 2) {
+                        cloudLabel[ind] = 2;
+                        cornerPointsSharp.push_back(laserCloud->points[ind]);
+                        cornerPointsLessSharp.push_back(laserCloud->points[ind]);
+                    } else if (largestPickedNum <= 20) {
+                        cloudLabel[ind] = 1;
+                        cornerPointsLessSharp.push_back(laserCloud->points[ind]);
+                    } else {
+                        break;
                     }
+                    //下面两个循环让附近的5个点不能被选，如果离得很远的话就可以（break）
+                    cloudNeighborPicked[ind] = 1;
+                    for (int l = 1; l <= 5; l++) {
+                        float diffX = laserCloud->points[ind + l].x 
+                                    - laserCloud->points[ind + l - 1].x;
+                        float diffY = laserCloud->points[ind + l].y 
+                                    - laserCloud->points[ind + l - 1].y;
+                        float diffZ = laserCloud->points[ind + l].z 
+                                    - laserCloud->points[ind + l - 1].z;
+                        if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
+                        break;
+                        }
 
-                    cloudNeighborPicked[ind + l] = 1;
-                }
-                for (int l = -1; l >= -5; l--) {
-                    float diffX = laserCloud->points[ind + l].x 
-                                - laserCloud->points[ind + l + 1].x;
-                    float diffY = laserCloud->points[ind + l].y 
-                                - laserCloud->points[ind + l + 1].y;
-                    float diffZ = laserCloud->points[ind + l].z 
-                                - laserCloud->points[ind + l + 1].z;
-                    if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
-                    break;
+                        cloudNeighborPicked[ind + l] = 1;
                     }
+                    for (int l = -1; l >= -5; l--) {
+                        float diffX = laserCloud->points[ind + l].x 
+                                    - laserCloud->points[ind + l + 1].x;
+                        float diffY = laserCloud->points[ind + l].y 
+                                    - laserCloud->points[ind + l + 1].y;
+                        float diffZ = laserCloud->points[ind + l].z 
+                                    - laserCloud->points[ind + l + 1].z;
+                        if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
+                        break;
+                        }
 
-                    cloudNeighborPicked[ind + l] = 1;
-                }
+                        cloudNeighborPicked[ind + l] = 1;
+                    }
                 }
             }
 
             int smallestPickedNum = 0;
             for (int k = sp; k <= ep; k++) {
                 int ind = cloudSortInd[k];
-                if (cloudNeighborPicked[ind] == 0 &&
-                    cloudCurvature[ind] < 0.1) {
+                if (cloudNeighborPicked[ind] == 0 && cloudCurvature[ind] < 0.1) {
+                           
 
-                cloudLabel[ind] = -1;
-                surfPointsFlat.push_back(laserCloud->points[ind]);
+                        cloudLabel[ind] = -1;
+                        // surfPointsFlat.push_back(laserCloud->points[ind]);
 
-                smallestPickedNum++;
-                if (smallestPickedNum >= 4) {
-                    break;
-                }
+                        smallestPickedNum++;
+                        // if (smallestPickedNum >= 4) {
+                        //     break;
+                        // }
 
-                cloudNeighborPicked[ind] = 1;
-                for (int l = 1; l <= 5; l++) {
-                    float diffX = laserCloud->points[ind + l].x 
-                                - laserCloud->points[ind + l - 1].x;
-                    float diffY = laserCloud->points[ind + l].y 
-                                - laserCloud->points[ind + l - 1].y;
-                    float diffZ = laserCloud->points[ind + l].z 
-                                - laserCloud->points[ind + l - 1].z;
-                    if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
-                    break;
-                    }
+                        if (smallestPickedNum <= 4) {
+                            cloudLabel[ind] = -1;
+                            surfPointsFlat.push_back(laserCloud->points[ind]);
+                            surfPointsLessFlatScan->push_back(laserCloud->points[ind]);
+                        } else if (smallestPickedNum <= 40) {
+                            cloudLabel[ind] = -1;
+                            surfPointsLessFlatScan->push_back(laserCloud->points[ind]);
+                        } else {
+                            break;
+                        }
 
-                    cloudNeighborPicked[ind + l] = 1;
-                }
-                for (int l = -1; l >= -5; l--) {
-                    float diffX = laserCloud->points[ind + l].x 
-                                - laserCloud->points[ind + l + 1].x;
-                    float diffY = laserCloud->points[ind + l].y 
-                                - laserCloud->points[ind + l + 1].y;
-                    float diffZ = laserCloud->points[ind + l].z 
-                                - laserCloud->points[ind + l + 1].z;
-                    if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
-                    break;
-                    }
+                        cloudNeighborPicked[ind] = 1;
+                        for (int l = 1; l <= 5; l++) {
+                            float diffX = laserCloud->points[ind + l].x 
+                                        - laserCloud->points[ind + l - 1].x;
+                            float diffY = laserCloud->points[ind + l].y 
+                                        - laserCloud->points[ind + l - 1].y;
+                            float diffZ = laserCloud->points[ind + l].z 
+                                        - laserCloud->points[ind + l - 1].z;
+                            if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
+                            break;
+                            }
 
-                    cloudNeighborPicked[ind + l] = 1;
-                }
+                            cloudNeighborPicked[ind + l] = 1;
+                        }
+                        for (int l = -1; l >= -5; l--) {
+                            float diffX = laserCloud->points[ind + l].x 
+                                        - laserCloud->points[ind + l + 1].x;
+                            float diffY = laserCloud->points[ind + l].y 
+                                        - laserCloud->points[ind + l + 1].y;
+                            float diffZ = laserCloud->points[ind + l].z 
+                                        - laserCloud->points[ind + l + 1].z;
+                            if (diffX * diffX + diffY * diffY + diffZ * diffZ > 0.05) {
+                            break;
+                            }
+
+                            cloudNeighborPicked[ind + l] = 1;
+                        }
                 }
             }
 
-            for (int k = sp; k <= ep; k++) {
-                if (cloudLabel[k] <= 0) {
-                surfPointsLessFlatScan->push_back(laserCloud->points[k]);
-                }
-            }
+            // for (int k = sp; k <= ep; k++) {
+            
+            //     int ind = cloudSortInd[k];
+
+            //    if( cloudNeighborPicked[ind] == 0 &&
+            //      cloudCurvature[ind] < 0.05){
+            //         surfPointsLessFlatScan->push_back(laserCloud->points[ind]);    
+            //     }
+
+
+            // //     if (cloudLabel[k] <= 0) {
+            // //     surfPointsLessFlatScan->push_back(laserCloud->points[k]);
+            // //     }
+            // }
             }
 
             pcl::PointCloud<PointType> surfPointsLessFlatScanDS;
@@ -411,8 +437,8 @@ class scanRegistration{
             downSizeFilter.setLeafSize(0.2, 0.2, 0.2);
             downSizeFilter.filter(surfPointsLessFlatScanDS);
 
-            surfPointsLessFlat += surfPointsLessFlatScanDS;
-            // surfPointsLessFlat += *surfPointsLessFlatScan;
+            // surfPointsLessFlat += surfPointsLessFlatScanDS;
+            surfPointsLessFlat += *surfPointsLessFlatScan;
         }
 
 
@@ -512,6 +538,7 @@ class scanRegistration{
         float cloudCurvature[160000];
         int cloudSortInd[160000];
         int cloudNeighborPicked[160000];
+        int cloudNeighborPickedForCorner[160000];
         int cloudLabel[160000];
 
         int imuPointerFront;
