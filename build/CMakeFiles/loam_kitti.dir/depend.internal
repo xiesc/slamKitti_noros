@@ -6,6 +6,7 @@ CMakeFiles/loam_kitti.dir/src/main.cpp.o
  ../include/laserOdometry.hpp
  ../include/loam_velodyne/common.h
  ../include/scanRegistration.hpp
+ ../include/transformMaintenance.hpp
  /home/xiesc/xieshichao/slamKitti_noros/src/main.cpp
  /opt/ros/kinetic/include/opencv-3.3.1/opencv/cv.h
  /opt/ros/kinetic/include/opencv-3.3.1/opencv/cxcore.h

@@ -69,6 +69,15 @@ struct laserMappingBack{
   
 };
 
+struct maintenanceBack{
+
+  float transformMapped[6];
+
+
+  
+};
+
+
 
 
 

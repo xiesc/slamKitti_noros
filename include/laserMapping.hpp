@@ -81,8 +81,8 @@ public:
 
         PointType pointOri, pointSel, pointProj, coeff;
 
-        cv::Mat matA0(10, 3, CV_32F, cv::Scalar::all(0));
-        cv::Mat matB0(10, 1, CV_32F, cv::Scalar::all(-1));
+        cv::Mat matA0(5, 3, CV_32F, cv::Scalar::all(0));
+        cv::Mat matB0(5, 1, CV_32F, cv::Scalar::all(-1));
         cv::Mat matX0(3, 1, CV_32F, cv::Scalar::all(0));
 
         cv::Mat matA1(3, 3, CV_32F, cv::Scalar::all(0));
@@ -402,17 +402,17 @@ public:
                 }
 
                 laserCloudCornerStack->clear();
-                downSizeFilterCorner.setInputCloud(laserCloudCornerStack2);
-                downSizeFilterCorner.filter(*laserCloudCornerStack);
-                // *laserCloudCornerStack=*laserCloudCornerStack2;
+                // downSizeFilterCorner.setInputCloud(laserCloudCornerStack2);
+                // downSizeFilterCorner.filter(*laserCloudCornerStack);
+                *laserCloudCornerStack=*laserCloudCornerStack2;
 
                 int laserCloudCornerStackNum = laserCloudCornerStack->points.size();
 
                 laserCloudSurfStack->clear();
-                downSizeFilterSurf.setInputCloud(laserCloudSurfStack2);
-                downSizeFilterSurf.filter(*laserCloudSurfStack);
+                // downSizeFilterSurf.setInputCloud(laserCloudSurfStack2);
+                // downSizeFilterSurf.filter(*laserCloudSurfStack);
 
-                // *laserCloudSurfStack = *laserCloudSurfStack2;
+                *laserCloudSurfStack = *laserCloudSurfStack2;
                 int laserCloudSurfStackNum = laserCloudSurfStack->points.size();
 
                 laserCloudCornerStack2->clear();
@@ -427,7 +427,7 @@ public:
                         
          
                 
-                for (int iterCount = 0; iterCount < 10; iterCount++) {
+                for (int iterCount = 0; iterCount < 100; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
                        
@@ -563,10 +563,10 @@ public:
 
                     pointOri = laserCloudSurfStack->points[i];
                     pointAssociateToMap(&pointOri, &pointSel); 
-                    kdtreeSurfFromMap->nearestKSearch(pointSel, 10, pointSearchInd, pointSearchSqDis);
+                    kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
 
-                    if (pointSearchSqDis[9] < 1.0) {
-                        for (int j = 0; j < 10; j++) {
+                    if (pointSearchSqDis[4] < 0.2) {
+                        for (int j = 0; j < 5; j++) {
                         matA0.at<float>(j, 0) = laserCloudSurfFromMap->points[pointSearchInd[j]].x;
                         matA0.at<float>(j, 1) = laserCloudSurfFromMap->points[pointSearchInd[j]].y;
                         matA0.at<float>(j, 2) = laserCloudSurfFromMap->points[pointSearchInd[j]].z;
@@ -576,16 +576,16 @@ public:
                         cv::Mat AB;
                         AB = matA0*matX0;
                         // cerr<<AB<<endl;
-                        bool flag_planer = true;
-                        for (int ii =0 ;ii<10;ii++){
-                            if (fabs(AB.at<float>(ii,0)+1)>0.05){
-                                flag_planer = false;
-                                break;
-                            }
-                        }
+                        // bool flag_planer = true;
+                        // for (int ii =0 ;ii<5;ii++){
+                        //     if (fabs(AB.at<float>(ii,0)+1)>0.05){
+                        //         flag_planer = false;
+                        //         break;
+                        //     }
+                        // }
                         //  cerr<<flag_planer<<endl;
-                        if (!flag_planer)
-                            break;
+                        // if (!flag_planer)
+                        //     break;
 
                         float pa = matX0.at<float>(0, 0);
                         float pb = matX0.at<float>(1, 0);
@@ -599,7 +599,7 @@ public:
                         pd /= ps;
 
                         bool planeValid = true;
-                        for (int j = 0; j < 10; j++) {
+                        for (int j = 0; j < 5; j++) {
                         if (fabs(pa * laserCloudSurfFromMap->points[pointSearchInd[j]].x +
                             pb * laserCloudSurfFromMap->points[pointSearchInd[j]].y +
                             pc * laserCloudSurfFromMap->points[pointSearchInd[j]].z + pd) > 0.2) {
@@ -686,28 +686,28 @@ public:
                     matAtB = matAt * matB;
                     cv::solve(matAtA, matAtB, matX, cv::DECOMP_QR);
 
-                    // if (iterCount == 0) {
-                    // cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
-                    // cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
-                    // cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
+                    if (iterCount == 0) {
+                    cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
+                    cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
+                    cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
 
-                    // cv::eigen(matAtA, matE, matV);
-                    // matV.copyTo(matV2);
+                    cv::eigen(matAtA, matE, matV);
+                    matV.copyTo(matV2);
 
-                    // isDegenerate = false;
-                    // float eignThre[6] = {100, 100, 100, 100, 100, 100};
-                    // for (int i = 5; i >= 0; i--) {
-                    //     if (matE.at<float>(0, i) < eignThre[i]) {
-                    //     for (int j = 0; j < 6; j++) {
-                    //         matV2.at<float>(i, j) = 0;
-                    //     }
-                    //     isDegenerate = true;
-                    //     } else {
-                    //     break;
-                    //     }
-                    // }
-                    // matP = matV.inv() * matV2;
-                    // }
+                    isDegenerate = false;
+                    float eignThre[6] = {100, 100, 100, 100, 100, 100};
+                    for (int i = 5; i >= 0; i--) {
+                        if (matE.at<float>(0, i) < eignThre[i]) {
+                        for (int j = 0; j < 6; j++) {
+                            matV2.at<float>(i, j) = 0;
+                        }
+                        isDegenerate = true;
+                        } else {
+                        break;
+                        }
+                    }
+                    matP = matV.inv() * matV2;
+                    }
 
                     if (isDegenerate) {
                         cerr<<"error"<<endl;
@@ -732,8 +732,11 @@ public:
                                         pow(matX.at<float>(4, 0) * 100, 2) +
                                         pow(matX.at<float>(5, 0) * 100, 2));
 
-                    if (deltaR < 0.05 && deltaT < 0.05) {
+                    if (deltaR < 0.005 && deltaT < 0.05 && matX.at<float>(0, 0) < 0.002) {
                     break;
+                    }
+                    if (iterCount>9){
+                        cerr<<"inter_count_max_map"<<iterCount<<endl;
                     }
                 }
 
@@ -773,32 +776,32 @@ public:
                         }
                 
                 }
-                    std::stringstream filename;
-                    filename << "/home/xiesc/testpcd_FeaturesPointsCloudCorner/"<<num_id<<".pcd";
+                    // std::stringstream filename;
+                    // filename << "/home/xiesc/testpcd_FeaturesPointsCloudCorner/"<<num_id<<".pcd";
                     
-                    pcl::io::savePCDFileASCII (filename.str(), FeaturesPointsCloudCorner);
+                    // pcl::io::savePCDFileASCII (filename.str(), FeaturesPointsCloudCorner);
                     
-                    if (FeaturesPointsCloudSurf.size()>0){
-                    std::stringstream filename4;
-                    filename4 << "/home/xiesc/testpcd_FeaturesPointsCloudSurf/"<<num_id<<".pcd";
+                    // if (FeaturesPointsCloudSurf.size()>0){
+                    // std::stringstream filename4;
+                    // filename4 << "/home/xiesc/testpcd_FeaturesPointsCloudSurf/"<<num_id<<".pcd";
                     
-                    pcl::io::savePCDFileASCII (filename4.str(), FeaturesPointsCloudSurf);}
+                    // pcl::io::savePCDFileASCII (filename4.str(), FeaturesPointsCloudSurf);}
                             
-                    std::stringstream filename2;
-                    filename2 << "/home/xiesc/testpcd_FeaturesPointsCloudRegistrationCorner/"<<num_id<<".pcd";
+                    // std::stringstream filename2;
+                    // filename2 << "/home/xiesc/testpcd_FeaturesPointsCloudRegistrationCorner/"<<num_id<<".pcd";
                     
-                    pcl::io::savePCDFileASCII (filename2.str(), FeaturesPointsCloudRegistrationCorner);
-                    if (FeaturesPointsCloudSurf.size()>0){
-                    std::stringstream filename3;
-                    filename3 << "/home/xiesc/testpcd_FeaturesPointsCloudRegistrationSurf/"<<num_id<<".pcd";
+                    // pcl::io::savePCDFileASCII (filename2.str(), FeaturesPointsCloudRegistrationCorner);
+                    // if (FeaturesPointsCloudSurf.size()>0){
+                    // std::stringstream filename3;
+                    // filename3 << "/home/xiesc/testpcd_FeaturesPointsCloudRegistrationSurf/"<<num_id<<".pcd";
                     
-                    pcl::io::savePCDFileASCII (filename3.str(), FeaturesPointsCloudRegistrationSurf);}
+                    // pcl::io::savePCDFileASCII (filename3.str(), FeaturesPointsCloudRegistrationSurf);}
                     
 
-                    std::stringstream filename5;
-                    filename5 << "/home/xiesc/testpcd_Error/"<<num_id<<".pcd";
+                    // std::stringstream filename5;
+                    // filename5 << "/home/xiesc/testpcd_Error/"<<num_id<<".pcd";
                     
-                    pcl::io::savePCDFileASCII (filename5.str(), *coeffSel);
+                    // pcl::io::savePCDFileASCII (filename5.str(), *coeffSel);
                    
                      
 

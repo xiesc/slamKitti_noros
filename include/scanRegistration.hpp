@@ -159,10 +159,10 @@ class scanRegistration{
         }
 
 
-        std::stringstream filename;
-        filename << "/home/xiesc/testpcd_layer/"<<num_id<<".pcd";
+        // std::stringstream filename;
+        // filename << "/home/xiesc/testpcd_layer/"<<num_id<<".pcd";
         
-         pcl::io::savePCDFileASCII (filename.str(), *laserCloud);
+        //  pcl::io::savePCDFileASCII (filename.str(), *laserCloud);
             
 
 
@@ -275,7 +275,7 @@ class scanRegistration{
             }
             float temp_range;
             temp_range = sqrt (pow(laserCloud->points[i].x,2)+pow(laserCloud->points[i].y,2)+pow(laserCloud->points[i].z,2));
-            if (laserCloud->points[i].y>-1.8 && laserCloud->points[i].y <-1.3 && temp_range<7.3){
+            if (laserCloud->points[i].y>-2 && laserCloud->points[i].y <-1.3 && temp_range<8){
             cloudNeighborPickedForCorner[i] = 1;
             }
 
@@ -315,15 +315,15 @@ class scanRegistration{
             int largestPickedNum = 0;
             for (int k = ep; k >= sp; k--) {
                 int ind = cloudSortInd[k];
-                if (cloudNeighborPicked[ind] == 0 && cloudCurvature[ind] > 5 &&cloudNeighborPickedForCorner[ind]==0) {
+                if (cloudNeighborPicked[ind] == 0 && cloudCurvature[ind] > 0.1 &&cloudNeighborPickedForCorner[ind]==0) {
                    
                     
                     largestPickedNum++;
-                    if (largestPickedNum <= 2) {
+                    if (largestPickedNum <= 4) {
                         cloudLabel[ind] = 2;
                         cornerPointsSharp.push_back(laserCloud->points[ind]);
                         cornerPointsLessSharp.push_back(laserCloud->points[ind]);
-                    } else if (largestPickedNum <= 20) {
+                    } else if (largestPickedNum <= 40) {
                         cloudLabel[ind] = 1;
                         cornerPointsLessSharp.push_back(laserCloud->points[ind]);
                     } else {
@@ -367,23 +367,23 @@ class scanRegistration{
                            
 
                         cloudLabel[ind] = -1;
-                        // surfPointsFlat.push_back(laserCloud->points[ind]);
+                        surfPointsFlat.push_back(laserCloud->points[ind]);
 
                         smallestPickedNum++;
-                        // if (smallestPickedNum >= 4) {
-                        //     break;
-                        // }
-
-                        if (smallestPickedNum <= 4) {
-                            cloudLabel[ind] = -1;
-                            surfPointsFlat.push_back(laserCloud->points[ind]);
-                            surfPointsLessFlatScan->push_back(laserCloud->points[ind]);
-                        } else if (smallestPickedNum <= 40) {
-                            cloudLabel[ind] = -1;
-                            surfPointsLessFlatScan->push_back(laserCloud->points[ind]);
-                        } else {
+                        if (smallestPickedNum >= 8) {
                             break;
                         }
+
+                        // if (smallestPickedNum <= 8) {
+                        //     cloudLabel[ind] = -1;
+                        //     surfPointsFlat.push_back(laserCloud->points[ind]);
+                        //     surfPointsLessFlatScan->push_back(laserCloud->points[ind]);
+                        // } else if (smallestPickedNum <= 80) {
+                        //     cloudLabel[ind] = -1;
+                        //     surfPointsLessFlatScan->push_back(laserCloud->points[ind]);
+                        // } else {
+                        //     break;
+                        // }
 
                         cloudNeighborPicked[ind] = 1;
                         for (int l = 1; l <= 5; l++) {
@@ -415,9 +415,9 @@ class scanRegistration{
                 }
             }
 
-            // for (int k = sp; k <= ep; k++) {
+            for (int k = sp; k <= ep; k++) {
             
-            //     int ind = cloudSortInd[k];
+                int ind = cloudSortInd[k];
 
             //    if( cloudNeighborPicked[ind] == 0 &&
             //      cloudCurvature[ind] < 0.05){
@@ -425,10 +425,15 @@ class scanRegistration{
             //     }
 
 
-            // //     if (cloudLabel[k] <= 0) {
-            // //     surfPointsLessFlatScan->push_back(laserCloud->points[k]);
-            // //     }
-            // }
+                if (cloudLabel[k] <= 0) {
+                surfPointsLessFlatScan->push_back(laserCloud->points[k]);
+                }
+                k++;
+                k++;
+                k++;
+                k++;
+
+            }
             }
 
             pcl::PointCloud<PointType> surfPointsLessFlatScanDS;
@@ -437,8 +442,8 @@ class scanRegistration{
             downSizeFilter.setLeafSize(0.2, 0.2, 0.2);
             downSizeFilter.filter(surfPointsLessFlatScanDS);
 
-            // surfPointsLessFlat += surfPointsLessFlatScanDS;
-            surfPointsLessFlat += *surfPointsLessFlatScan;
+            surfPointsLessFlat += surfPointsLessFlatScanDS;
+            // surfPointsLessFlat += *surfPointsLessFlatScan;
         }
 
 

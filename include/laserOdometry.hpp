@@ -108,7 +108,7 @@ class laserOdometry{
                 int cornerPointsSharpNum = cornerPointsSharp->points.size();
                 int surfPointsFlatNum = surfPointsFlat->points.size();
                 
-                for (int iterCount = 0; iterCount < 25; iterCount++) {
+                for (int iterCount = 0; iterCount < 50; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
 
@@ -120,11 +120,11 @@ class laserOdometry{
                         pcl::removeNaNFromPointCloud(*laserCloudCornerLast,*laserCloudCornerLast, indices);
                         kdtreeCornerLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
                         int closestPointInd = -1, minPointInd2 = -1;
-                        if (pointSearchSqDis[0] < 25) {
+                        if (pointSearchSqDis[0] < 5) {
                             closestPointInd = pointSearchInd[0];
                             int closestPointScan = int(laserCloudCornerLast->points[closestPointInd].intensity);
 
-                            float pointSqDis, minPointSqDis2 = 25;
+                            float pointSqDis, minPointSqDis2 = 5;
                             for (int j = closestPointInd + 1; j < cornerPointsSharpNum; j++) {
                             if (int(laserCloudCornerLast->points[j].intensity) > closestPointScan + 2.5) {
                                 break;
@@ -234,11 +234,11 @@ class laserOdometry{
                     if (iterCount % 5 == 0) {
                     kdtreeSurfLast->nearestKSearch(pointSel, 1, pointSearchInd, pointSearchSqDis);
                     int closestPointInd = -1, minPointInd2 = -1, minPointInd3 = -1;
-                    if (pointSearchSqDis[0] < 25) {
+                    if (pointSearchSqDis[0] < 5) {
                         closestPointInd = pointSearchInd[0];
                         int closestPointScan = int(laserCloudSurfLast->points[closestPointInd].intensity);
 
-                        float pointSqDis, minPointSqDis2 = 25, minPointSqDis3 = 25;
+                        float pointSqDis, minPointSqDis2 = 5, minPointSqDis3 = 5;
                         for (int j = closestPointInd + 1; j < surfPointsFlatNum; j++) {
                         if (int(laserCloudSurfLast->points[j].intensity) > closestPointScan + 2.5) {
                             break;
@@ -413,28 +413,28 @@ class laserOdometry{
                 matAtB = matAt * matB;
                 cv::solve(matAtA, matAtB, matX, cv::DECOMP_QR);
 
-                // if (iterCount == 0) {
-                //     cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
-                //     cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
-                //     cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
+                if (iterCount == 0) {
+                    cv::Mat matE(1, 6, CV_32F, cv::Scalar::all(0));
+                    cv::Mat matV(6, 6, CV_32F, cv::Scalar::all(0));
+                    cv::Mat matV2(6, 6, CV_32F, cv::Scalar::all(0));
 
-                //     cv::eigen(matAtA, matE, matV);
-                //     matV.copyTo(matV2);
+                    cv::eigen(matAtA, matE, matV);
+                    matV.copyTo(matV2);
 
-                //     isDegenerate = false;
-                //     float eignThre[6] = {10, 10, 10, 10, 10, 10};
-                //     for (int i = 5; i >= 0; i--) {
-                //     if (matE.at<float>(0, i) < eignThre[i]) {
-                //         for (int j = 0; j < 6; j++) {
-                //         matV2.at<float>(i, j) = 0;
-                //         }
-                //         isDegenerate = true;
-                //     } else {
-                //         break;
-                //     }
-                //     }
-                //     matP = matV.inv() * matV2;
-                // }
+                    isDegenerate = false;
+                    float eignThre[6] = {10, 10, 10, 10, 10, 10};
+                    for (int i = 5; i >= 0; i--) {
+                    if (matE.at<float>(0, i) < eignThre[i]) {
+                        for (int j = 0; j < 6; j++) {
+                        matV2.at<float>(i, j) = 0;
+                        }
+                        isDegenerate = true;
+                    } else {
+                        break;
+                    }
+                    }
+                    matP = matV.inv() * matV2;
+                }
 
                 if (isDegenerate) {
                     cv::Mat matX2(6, 1, CV_32F, cv::Scalar::all(0));
@@ -442,6 +442,11 @@ class laserOdometry{
                     matX = matP * matX2;
                 }
 
+                // if (iterCount>20)
+                // transform[0] += matX.at<float>(0, 0);
+                // else
+                // transform[0] = 0;
+                
                 transform[0] += matX.at<float>(0, 0);
                 transform[1] += matX.at<float>(1, 0);
                 transform[2] += matX.at<float>(2, 0);
@@ -464,16 +469,22 @@ class laserOdometry{
                                     pow(matX.at<float>(4, 0) * 100, 2) +
                                     pow(matX.at<float>(5, 0) * 100, 2));
 
-                if (deltaR < 0.1 && deltaT < 0.1) {//迭代计算以后最有解变化过小终止迭代
+                if (deltaR < 0.05 && deltaT < 0.05) {//迭代计算以后最有解变化过小终止迭代
                     break;
                 }
+
+                 if (iterCount>24){
+                        cerr<<"inter_count_max_odo"<<iterCount<<endl;
+                    }
+
+
                 }
             }
 
             // ROS_INFO("%f",transform[3]);
 
             float rx, ry, rz, tx, ty, tz;
-            transform[0] = transform[0]*0.5;
+            transform[0] = transform[0]*0;
             AccumulateRotation(transformSum[0], transformSum[1], transformSum[2], 
                                 -transform[0], -transform[1]*1 , -transform[2], rx, ry, rz);
 
@@ -481,7 +492,7 @@ class laserOdometry{
                     - sin(rz) * (transform[4] );
             float y1 = sin(rz) * (transform[3] ) 
                     + cos(rz) * (transform[4] );
-            float z1 = transform[5] * 1 ;
+            float z1 = transform[5];
 
             float x2 = x1;
             float y2 = cos(rx) * y1 - sin(rx) * z1;

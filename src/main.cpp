@@ -2,7 +2,7 @@
 #include <scanRegistration.hpp>
 #include <laserOdometry.hpp>
 #include <laserMapping.hpp>
-
+#include <transformMaintenance.hpp>
 
 
 #include <pcl/point_types.h>
@@ -65,12 +65,14 @@ int main(int argc, char* args[]){
 	
 	std::ofstream outfile;
 	std::ofstream outfile2;
+	std::ofstream outfile3;
 	int i;
 	char filename[50] = {0};
 	string p;
 
 	outfile.open (p.assign(args[1]).append("/../pose.txt").c_str());
 	outfile2.open (p.assign(args[1]).append("/../pose_bef.txt").c_str());
+	outfile3.open (p.assign(args[1]).append("/../mapLog.txt").c_str());
 	int num_id=0;
  	
     pcl::visualization::CloudViewer viewer ("mapping viewer");  
@@ -80,11 +82,15 @@ int main(int argc, char* args[]){
     scanRegistration scanner;
 	laserOdometry odometrier;
 	laserMapping mapper;
+	transformMainTenance mainer;
 
-
+		scanRegistrationBack scanValueBack;
+        laserOdometryBack odometryValueBack;
+		laserMappingBack mappingBackValue;
+		maintenanceBack maintenanceValueBack;
 
 	 
-	for (i=0;i<files.size() ;i++){
+	for (i=1;i<files.size() ;i++){
 		
 		if (i<10) 
 			snprintf(filename,sizeof(filename),"%s/00000%d.bin",args[1],i);
@@ -122,14 +128,22 @@ int main(int argc, char* args[]){
         
 		cout << "Read KTTI point cloud with " << j << " belong to " <<filename<<","<<i <<endl;
         
-		scanRegistrationBack scanValueBack;
-        laserOdometryBack odometryValueBack;
-		laserMappingBack mappingBackValue;
+
 
         scanValueBack = scanner.laserCloudHandler(points);
 		odometryValueBack = odometrier.laserOdometryHandler(scanValueBack);
+		// if (i%5==0 || i<10){
+		// 	mappingBackValue = mapper.laserMappingHandler(odometryValueBack);
+		// 	outfile3<<mappingBackValue.transformAftMapped[0]<<" "<<mappingBackValue.transformAftMapped[1]<<" "<<mappingBackValue.transformAftMapped[2]<<" "<<mappingBackValue.transformAftMapped[3]<<" "<<mappingBackValue.transformAftMapped[4]<<" "<<mappingBackValue.transformAftMapped[5]<<endl;
+
+		// }
 		mappingBackValue = mapper.laserMappingHandler(odometryValueBack);
-        // scanner.test_print();
+		
+		// maintenanceValueBack = mainer.transformRecorder(odometryValueBack,mappingBackValue);
+
+
+
+
 
 
         // std::stringstream filename;
@@ -149,8 +163,9 @@ int main(int argc, char* args[]){
 
 		outfile<<mappingBackValue.transformAftMapped[0]<<" "<<mappingBackValue.transformAftMapped[1]<<" "<<mappingBackValue.transformAftMapped[2]<<" "<<mappingBackValue.transformAftMapped[3]<<" "<<mappingBackValue.transformAftMapped[4]<<" "<<mappingBackValue.transformAftMapped[5]<<endl;
 		outfile2<<odometryValueBack.transformSum[0]<<" "<<odometryValueBack.transformSum[1]<<" "<<odometryValueBack.transformSum[2]<<" "<<odometryValueBack.transformSum[3]<<" "<<odometryValueBack.transformSum[4]<<" "<<odometryValueBack.transformSum[5]<<endl;
-
-    	// // Save DoN features
+		outfile3<<maintenanceValueBack.transformMapped[0]<<" "<<maintenanceValueBack.transformMapped[1]<<" "<<maintenanceValueBack.transformMapped[2]<<" "<<maintenanceValueBack.transformMapped[3]<<" "<<maintenanceValueBack.transformMapped[4]<<" "<<maintenanceValueBack.transformMapped[5]<<endl;
+    
+		// // Save DoN features
 		// writer.write<PointXYZI> (outfile, *points, false);
 		
 	}
