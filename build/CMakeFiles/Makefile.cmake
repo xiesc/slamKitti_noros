@@ -15,6 +15,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/opt/ros/kinetic/share/OpenCV-3.3.1/OpenCVConfig.cmake"
   "/opt/ros/kinetic/share/OpenCV-3.3.1/OpenCVModules-none.cmake"
   "/opt/ros/kinetic/share/OpenCV-3.3.1/OpenCVModules.cmake"
+  "/usr/lib/cmake/eigen3/Eigen3Config.cmake"
   "/usr/lib/cmake/vtk-6.2/Modules/vtkChartsCore.cmake"
   "/usr/lib/cmake/vtk-6.2/Modules/vtkCommonColor.cmake"
   "/usr/lib/cmake/vtk-6.2/Modules/vtkCommonComputationalGeometry.cmake"

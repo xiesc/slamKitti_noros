@@ -20,6 +20,7 @@
 #include <pcl/io/pcd_io.h>
 #include <sstream>
 #include <fstream>
+#include <Eigen/Core>
 
 #include <iostream>
 

@@ -52,6 +52,12 @@ public:
                         laserCloudCornerArray2[i].reset(new pcl::PointCloud<PointType>());
                         laserCloudSurfArray2[i].reset(new pcl::PointCloud<PointType>());
                     }
+
+
+            //用于直接输入groundtruth的初始化
+            groundtruth = readGroundTruth("/home/xiesc/01.txt");
+            
+            //
         }
         
                 
@@ -740,6 +746,57 @@ public:
                     }
                 }
 
+                //用于直接输入groundtruth来观测结果
+                
+                 Eigen::Matrix<double,4,4> RTCam;
+                 Eigen::Matrix<double,3,3> RLC;
+                 Eigen::Matrix<double,3,1> TLC;
+                 Eigen::Matrix<double,4,4> RTLC;
+
+                 RTCam << groundtruth[num_id][0],groundtruth[num_id][1],groundtruth[num_id][2],groundtruth[num_id][3],
+                          groundtruth[num_id][4],groundtruth[num_id][5],groundtruth[num_id][6],groundtruth[num_id][7],
+                          groundtruth[num_id][8],groundtruth[num_id][9],groundtruth[num_id][10],groundtruth[num_id][11],
+                          0 ,0 ,0 ,1;
+                
+                RLC << 7.967514e-03 ,-9.999679e-01, -8.462264e-04,
+                       -2.771053e-03,8.241710e-04 ,-9.999958e-01,
+                       9.999644e-01, 7.969825e-03, -2.764397e-03;
+
+                TLC << -1.377769e-02, -5.542117e-02 ,-2.918589e-01;
+
+                RTLC.topLeftCorner(3,3) = RLC;
+                RTLC.topRightCorner(3,1) = TLC;
+                RTLC.bottomLeftCorner(1,4)<<0,0,0,1;
+                Eigen::Matrix<double,4,4> RTLL;
+                RTLL <<0.0,0.0,1.0,0.0,
+                       1.0,0.0,0.0,0.0,
+                       0.0,1.0,0.0,0.0,
+                       0.0,0.0,0.0,1.0;
+
+
+                
+                Eigen::Matrix<double,4,4> RTL = (RTLL.inverse())*(RTLC.inverse())*RTCam*RTLC*RTLL;
+                // std::cout<<RTLC.inverse()*RTLC<<std::endl;
+                // std::cout<<RTLL.inverse()*RTLL<<std::endl;
+
+                std::cout<<RTCam<<std::endl;
+                std::cout<<RTLC<<std::endl;
+                std::cout<<RTLL<<std::endl;                
+                std::cout<<RTCam*RTLC*RTLL<<std::endl;
+
+
+                double *Euangle = rotationMatrixToAngle(RTL.topLeftCorner(3,3));
+                transformTobeMapped[0] = Euangle[1];
+                transformTobeMapped[1] = Euangle[0];
+                transformTobeMapped[2] = Euangle[2];
+                transformTobeMapped[3] = RTL(0,3);
+                transformTobeMapped[4] = RTL(1,3);
+                transformTobeMapped[5] = RTL(2,3);
+
+                //groundtruth输入部分结束
+
+                // std::cout<<RTLC<<std::endl;
+
                 transformUpdate();
                 }
                 
@@ -907,15 +964,30 @@ public:
                 mappingBackValue.transformAftMapped[5]=transformAftMapped[5];
 
 
+                if (num_id >0){
+                    pcl::PointCloud<PointType>::Ptr errorColoredPointCloud  = pointsErrorMonitor(laserCloudOri,coeffSel);
+
+                    std::stringstream filename;
+                    filename << "/home/xiesc/monitor/"<<num_id<<".pcd";
+                        
+                    pcl::io::savePCDFileASCII (filename.str(), *errorColoredPointCloud);
+                }
+
+
+
                 // outfile<<num_id<<",odometry"<<std::endl;
                 num_id++;
 
  
 
-            }
-            }
-
-        
+            }//framecount
+            }//newdatain
+        float errorAll = 0.0;
+        for (int i =0 ;i < coeffSel->points.size();i++){
+            errorAll = errorAll + pow(coeffSel->points[i].intensity,2);
+        }
+       
+        outfile<<errorAll<<std::endl;
 
         return mappingBackValue;
         }
@@ -925,6 +997,13 @@ public:
 
 
 private:
+
+    //用于输入groundtruth的变量
+    double **groundtruth;
+
+    //
+
+
     std::ofstream outfile;
     std::ofstream outfile2;
     int num_id ;
@@ -1172,6 +1251,129 @@ private:
 
 
 
+        //用于观测点云中哪些点误差大
+    pcl::PointCloud<PointType>::Ptr pointsErrorMonitor (pcl::PointCloud<PointType>::Ptr selectedCloud,pcl::PointCloud<PointType>::Ptr errorCloud)
+        {
+            pcl::PointCloud<PointType>::Ptr errorColoredPointCloud(new pcl::PointCloud<PointType>());
+            PointType tempPoint;
+            // float maxError  = errorCloud->points[0].intensity;
+            // for (int i = 1; i <errorCloud->points.size();i++)
+            // {
+            //     if (errorCloud->points[i].intensity>maxError)
+            //         maxError = errorCloud->points[i].intensity;
+
+            // }
+
+            for (int i = 0; i <errorCloud->points.size();i++)
+            {
+                tempPoint.x = selectedCloud->points[i].x;
+                tempPoint.y = selectedCloud->points[i].y;
+                tempPoint.z = selectedCloud->points[i].z;
+                // tempPoint.intensity = float(errorCloud->points[i].intensity)/maxError;
+                tempPoint.intensity = float(errorCloud->points[i].intensity);
+                errorColoredPointCloud->push_back(tempPoint);
+            }
+
+            return errorColoredPointCloud;
+
+        }
+
+    int CountLines(string filename)//获取文件的行数
+     {
+        std::ifstream ReadFile;
+        int n=0;
+        std::string temp;
+        ReadFile.open(filename.c_str(),ios::in);//ios::in 表示以只读的方式读取文件
+        if(ReadFile.fail())//文件打开失败:返回0
+        {
+         ReadFile.close();
+        return 0;
+        }
+        else//文件存在,返回文件行数
+        {
+        while(getline(ReadFile,temp))
+        {
+            n++;
+        }
+        ReadFile.close();
+        return n;
+        }
+        
+     }
+
+    double **readGroundTruth(string inputFile)
+    {
+
+        std::ifstream file;
+        int lines;
+        int i =0;
+        int j =0;
+
+        file.open(inputFile.c_str(),ios::in);
+        
+            lines=CountLines(inputFile);
+            // double matrix[lines][12];
+            double** matrix = (double **)malloc(lines*sizeof(double *));
+            for (int i=0;i<lines;i++)
+                matrix[i] = (double *)malloc(12*sizeof(double));
+            double *matrix_ = &matrix[0][0];
+            while(!file.eof()) //读取数据到数组
+            {
+
+                if(i==12)
+                {
+                    i=0;
+                    j++;
+                    matrix_ = &matrix[j][0];
+                }
+
+                file>>*matrix_;
+                
+                matrix_++;
+                i++;
+                
+
+            }
+            file.close(); //关闭文件
+          
+
+        return matrix; 
+
+    }
+
+
+    //Rotation Matrix To angle RT = Ry * Rx* Rz ,so the rotation order is z first,x second and y is the last.
+    //the return value are ry,rx,rz
+    double *rotationMatrixToAngle(Eigen::Matrix<double,3,3> Rmatrix)
+    {
+        double *euAngle  = (double *)malloc(3*sizeof(double));
+        // std::cout<<Rmatrix(1,2)<<std::endl;
+        if (Rmatrix(1,2)== 1.0 | Rmatrix(1,2)==-1.0)
+        {
+            euAngle[2]=0.0;//set arbitrarily
+            
+
+            if (Rmatrix(1,2)== 1.0 )
+            {
+                euAngle[1] = 3.1415926/2;
+                euAngle[0] = euAngle[2]+atan2(Rmatrix(0,1),Rmatrix(0,0));
+            }
+            else
+            {
+                euAngle[1] = -3.1415926/2;
+                euAngle[0] = -euAngle[2]+atan2(-Rmatrix(0,1),-Rmatrix(0,0));
+            }
+        }
+        else
+        {
+            euAngle[1] = -asin(Rmatrix(1,2));
+            euAngle[2] = atan2(Rmatrix(1,0)/cos(euAngle[1]),Rmatrix(1,1)/cos(euAngle[1]));
+            euAngle[0] = atan2(Rmatrix(0,2)/cos(euAngle[1]),Rmatrix(2,2)/cos(euAngle[1]));
+        }
+
+        return euAngle;
+
+    }
 
 
 

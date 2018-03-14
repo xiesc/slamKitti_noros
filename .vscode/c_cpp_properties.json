@@ -39,7 +39,8 @@
                 "${workspaceRoot}/incude",
                 "/usr/include/eigen3",
                 "${workspaceRoot}/include",
-                "/usr/include/vtk-6.2"
+                "/usr/include/vtk-6.2",
+                "/usr/include/eigen3/Eigen"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",

@@ -90,7 +90,7 @@ int main(int argc, char* args[]){
 		maintenanceBack maintenanceValueBack;
 
 	 
-	for (i=1;i<files.size() ;i++){
+	for (i=0;i<files.size() ;i++){
 		
 		if (i<10) 
 			snprintf(filename,sizeof(filename),"%s/00000%d.bin",args[1],i);

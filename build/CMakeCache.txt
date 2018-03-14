@@ -249,6 +249,9 @@ ENSENSO_INCLUDE_DIR:PATH=ENSENSO_INCLUDE_DIR-NOTFOUND
 //Path to a library.
 ENSENSO_LIBRARY:FILEPATH=ENSENSO_LIBRARY-NOTFOUND
 
+//The directory containing a CMake configuration file for Eigen3.
+Eigen3_DIR:PATH=/usr/lib/cmake/eigen3
+
 //Path to a file.
 FLANN_INCLUDE_DIR:PATH=/usr/include
 

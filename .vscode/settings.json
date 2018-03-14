@@ -35,6 +35,10 @@
         "iostream": "cpp",
         "vector": "cpp",
         "fstream": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "slist": "cpp",
+        "core": "cpp",
+        "numericaldiff": "cpp",
+        "eigen": "cpp"
     }
 }
