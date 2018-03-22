@@ -423,17 +423,21 @@ public:
 
                 laserCloudCornerStack2->clear();
                 laserCloudSurfStack2->clear();
+                
+                         
 
-                         int num_corner = 0;
-                        int num_surf = 0;
+            if (laserCloudCornerFromMapNum > 10 && laserCloudSurfFromMapNum > 100) {
+               
+               planeParTobe = planeRANSAC(laserCloudSurfStack);
 
-                if (laserCloudCornerFromMapNum > 10 && laserCloudSurfFromMapNum > 100) {
                 kdtreeCornerFromMap->setInputCloud(laserCloudCornerFromMap);
                 kdtreeSurfFromMap->setInputCloud(laserCloudSurfFromMap);
-                        
+               
+               
+                // getGroundTruth();        
          
                 
-                for (int iterCount = 0; iterCount < 100; iterCount++) {
+                for (int iterCount = 0; iterCount < 15; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
                        
@@ -549,6 +553,13 @@ public:
                         coeff.z = s * lc;
                         coeff.intensity = s * ld2;
 
+
+                        //用于测试，使得intensity等于实际的loss
+                        // coeff.x =  la;
+                        // coeff.y =  lb;
+                        // coeff.z =  lc;
+                        // coeff.intensity =  ld2;
+
                         if (s > 0.1) {
                             laserCloudOri->push_back(pointOri);
                             coeffSel->push_back(coeff);
@@ -632,6 +643,13 @@ public:
                         coeff.z = s * pc;
                         coeff.intensity = s * pd2;
 
+                        //用于测试，使得intensity等于实际的loss
+                        // coeff.x =  pa;
+                        // coeff.y =  pb;
+                        // coeff.z =  pc;
+                        // coeff.intensity = pd2;
+
+
                         if (s > 0.1) {
                             laserCloudOri->push_back(pointOri);
                             coeffSel->push_back(coeff);
@@ -643,6 +661,98 @@ public:
                         }
                     }
                     }
+
+                    if (laserCloudOri->points.size()>100)
+                    {
+                        
+                    
+                    //add normal constrain
+                    float lmd = 20000.0;
+                     
+                   
+                   //通过3个点来表示一个平面
+                   //1
+                    pointOri.x = 0;
+                    pointOri.z = 0;
+                    pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
+                    pointAssociateToMap(&pointOri, &pointSel); 
+
+                    float pa = planeParBef(0);
+                    float pb = planeParBef(1);
+                    float pc = planeParBef(2);
+                    float pd = planeParBef(3);
+                    
+                    float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+
+                       
+
+                    coeff.x =  lmd*pa;
+                    coeff.y =  lmd*pb;
+                    coeff.z =  lmd*pc;
+                    coeff.intensity = lmd*pd2;
+
+                      
+                    laserCloudOri->push_back(pointOri);
+                    coeffSel->push_back(coeff);
+                            
+                    num_surf++;
+                    //2
+                    pointOri.x = 1;
+                    pointOri.z = 1;
+                    pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
+                    pointAssociateToMap(&pointOri, &pointSel); 
+
+                     pa = planeParBef(0);
+                     pb = planeParBef(1);
+                     pc = planeParBef(2);
+                     pd = planeParBef(3);
+                    
+                     pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+
+                       
+                   
+                    coeff.x =  lmd*pa;
+                    coeff.y =  lmd*pb;
+                    coeff.z =  lmd*pc;
+                    coeff.intensity = lmd*pd2;
+
+                      
+                    laserCloudOri->push_back(pointOri);
+                    coeffSel->push_back(coeff);
+
+                    num_surf++;
+                    //3
+                    pointOri.x = -1;
+                    pointOri.z = 1;
+                    pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
+                    pointAssociateToMap(&pointOri, &pointSel); 
+
+                     pa = planeParBef(0);
+                     pb = planeParBef(1);
+                     pc = planeParBef(2);
+                     pd = planeParBef(3);
+                    
+                     pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+
+                       
+
+                    coeff.x =  lmd*pa;
+                    coeff.y =  lmd*pb;
+                    coeff.z =  lmd*pc;
+                    coeff.intensity = lmd*pd2;
+
+                      
+                    laserCloudOri->push_back(pointOri);
+                    coeffSel->push_back(coeff);                    
+                    num_surf++;  
+                    }
+
+
+
+
+
+
+
 
                     float srx = sin(transformTobeMapped[0]);
                     float crx = cos(transformTobeMapped[0]);
@@ -715,12 +825,12 @@ public:
                     matP = matV.inv() * matV2;
                     }
 
-                    if (isDegenerate) {
-                        cerr<<"error"<<endl;
-                    cv::Mat matX2(6, 1, CV_32F, cv::Scalar::all(0));
-                    matX.copyTo(matX2);
-                    matX = matP * matX2;
-                    }
+                    // if (isDegenerate) {
+                    //     cerr<<"error"<<endl;
+                    // cv::Mat matX2(6, 1, CV_32F, cv::Scalar::all(0));
+                    // matX.copyTo(matX2);
+                    // matX = matP * matX2;
+                    // }
 
                     transformTobeMapped[0] += matX.at<float>(0, 0);
                     transformTobeMapped[1] += matX.at<float>(1, 0);
@@ -746,93 +856,79 @@ public:
                     }
                 }
 
-                //用于直接输入groundtruth来观测结果
-                
-                 Eigen::Matrix<double,4,4> RTCam;
-                 Eigen::Matrix<double,3,3> RLC;
-                 Eigen::Matrix<double,3,1> TLC;
-                 Eigen::Matrix<double,4,4> RTLC;
 
-                 RTCam << groundtruth[num_id][0],groundtruth[num_id][1],groundtruth[num_id][2],groundtruth[num_id][3],
-                          groundtruth[num_id][4],groundtruth[num_id][5],groundtruth[num_id][6],groundtruth[num_id][7],
-                          groundtruth[num_id][8],groundtruth[num_id][9],groundtruth[num_id][10],groundtruth[num_id][11],
-                          0 ,0 ,0 ,1;
-                
-                RLC << 7.967514e-03 ,-9.999679e-01, -8.462264e-04,
-                       -2.771053e-03,8.241710e-04 ,-9.999958e-01,
-                       9.999644e-01, 7.969825e-03, -2.764397e-03;
-
-                TLC << -1.377769e-02, -5.542117e-02 ,-2.918589e-01;
-
-                RTLC.topLeftCorner(3,3) = RLC;
-                RTLC.topRightCorner(3,1) = TLC;
-                RTLC.bottomLeftCorner(1,4)<<0,0,0,1;
-                Eigen::Matrix<double,4,4> RTLL;
-                RTLL <<0.0,0.0,1.0,0.0,
-                       1.0,0.0,0.0,0.0,
-                       0.0,1.0,0.0,0.0,
-                       0.0,0.0,0.0,1.0;
-
-
-                
-                Eigen::Matrix<double,4,4> RTL = (RTLL.inverse())*(RTLC.inverse())*RTCam*RTLC*RTLL;
-                // std::cout<<RTLC.inverse()*RTLC<<std::endl;
-                // std::cout<<RTLL.inverse()*RTLL<<std::endl;
-
-                std::cout<<RTCam<<std::endl;
-                std::cout<<RTLC<<std::endl;
-                std::cout<<RTLL<<std::endl;                
-                std::cout<<RTCam*RTLC*RTLL<<std::endl;
-
-
-                double *Euangle = rotationMatrixToAngle(RTL.topLeftCorner(3,3));
-                transformTobeMapped[0] = Euangle[1];
-                transformTobeMapped[1] = Euangle[0];
-                transformTobeMapped[2] = Euangle[2];
-                transformTobeMapped[3] = RTL(0,3);
-                transformTobeMapped[4] = RTL(1,3);
-                transformTobeMapped[5] = RTL(2,3);
-
-                //groundtruth输入部分结束
-
-                // std::cout<<RTLC<<std::endl;
-
+                // getGroundTruth();
                 transformUpdate();
                 }
                 
 
-                
-                
-                if (num_id !=0){
-                pcl::PointCloud<PointType> FeaturesPointsCloudSurf;
-                pcl::PointCloud<PointType> FeaturesPointsCloudCorner;
-                pcl::PointCloud<PointType> FeaturesPointsCloudRegistrationSurf;
-                pcl::PointCloud<PointType> FeaturesPointsCloudRegistrationCorner;
+                // if (num_id >0){
+                //     pcl::PointCloud<PointType>::Ptr errorColoredPointCloudCorner  = pointsErrorMonitor(laserCloudOri,coeffSel,true);
+                //     pcl::PointCloud<PointType>::Ptr errorColoredPointCloudSurf  = pointsErrorMonitor(laserCloudOri,coeffSel,false);
+                //     std::stringstream filename;
+                //     std::stringstream filename2;
+                //     filename << "/home/xiesc/monitor_corner/"<<num_id<<".pcd";
+                //     filename2 << "/home/xiesc/monitor_surf/"<<num_id<<".pcd";    
+                //     pcl::io::savePCDFileASCII (filename.str(), *errorColoredPointCloudCorner);
+                //     pcl::io::savePCDFileASCII (filename2.str(), *errorColoredPointCloudSurf);
 
-                int laserCloudSelNum = laserCloudOri->points.size();
-                cerr<<laserCloudSelNum<<endl;
-                // cerr<<"1"<<laserCloudSelNum<<endl;
-                for (int i = 0;i<laserCloudSelNum;i++){
-                        pointAssociateToMap(&laserCloudOri->points[i], &pointSel);
+                //     pcl::PointCloud<PointType>::Ptr largeErrorCorner (new pcl::PointCloud<PointType>());
+                //     pcl::PointCloud<PointType>::Ptr largeErrorSurf (new pcl::PointCloud<PointType>());
+                //     pcl::PointCloud<PointType>::Ptr largeErrorCornerTarget (new pcl::PointCloud<PointType>());
+                //     pcl::PointCloud<PointType>::Ptr largeErrorSurfTarget (new pcl::PointCloud<PointType>());
+                   
+                //     largeErrorEvaluation(laserCloudOri,coeffSel,largeErrorCorner,largeErrorSurf,largeErrorCornerTarget,largeErrorSurfTarget);
+                //     std::stringstream filename3;
+                //     std::stringstream filename4;
+                //     std::stringstream filename5;
+                //     std::stringstream filename6;
+                //     filename3 << "/home/xiesc/monitor_corner_largeerror/"<<num_id<<"ori.pcd";
+                //     filename4 << "/home/xiesc/monitor_corner_largeerror/"<<num_id<<"tar.pcd";
+                //     filename5 << "/home/xiesc/monitor_surf_largeerror/"<<num_id<<"ori.pcd";
+                //     filename6 << "/home/xiesc/monitor_surf_largeerror/"<<num_id<<"tar.pcd";
+                //     if(largeErrorCorner->points.size()>0)
+                //     pcl::io::savePCDFileASCII (filename3.str(), *largeErrorCorner);
+                //     if(largeErrorCornerTarget->points.size()>0)
+                //     pcl::io::savePCDFileASCII (filename4.str(), *largeErrorCornerTarget);
+                //     if(largeErrorSurf->points.size()>0)
+                //     pcl::io::savePCDFileASCII (filename5.str(), *largeErrorSurf);
+                //     if(largeErrorSurfTarget->points.size()>0)
+                //     pcl::io::savePCDFileASCII (filename6.str(), *largeErrorSurfTarget);
+
+
+                // }
+                
+                // if (num_id !=0){
+                // pcl::PointCloud<PointType> FeaturesPointsCloudSurf;
+                // pcl::PointCloud<PointType> FeaturesPointsCloudCorner;
+                // pcl::PointCloud<PointType> FeaturesPointsCloudRegistrationSurf;
+                // pcl::PointCloud<PointType> FeaturesPointsCloudRegistrationCorner;
+
+                // int laserCloudSelNum = laserCloudOri->points.size();
+                // cerr<<laserCloudSelNum<<endl;
+                // // cerr<<"1"<<laserCloudSelNum<<endl;
+                // for (int i = 0;i<laserCloudSelNum;i++)
+                // {
+                //         pointAssociateToMap(&laserCloudOri->points[i], &pointSel);
                        
-                        if (i <num_corner){
-                            FeaturesPointsCloudCorner.push_back(pointSel);
-                            kdtreeCornerFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
-                            for(int j = 0 ;j<5;j++){
-                            FeaturesPointsCloudRegistrationCorner.push_back(laserCloudCornerFromMap->points[pointSearchInd[j]]);
-                            }
-                        }
-                        else{
-                            FeaturesPointsCloudSurf.push_back(pointSel);
-                            kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
-                            for(int j = 0 ;j<5;j++){   
-                            FeaturesPointsCloudRegistrationSurf.push_back(laserCloudSurfFromMap->points[pointSearchInd[j]]);
-                            }   
+                //         if (i <num_corner){
+                //             FeaturesPointsCloudCorner.push_back(pointSel);
+                //             kdtreeCornerFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                //             for(int j = 0 ;j<5;j++){
+                //             FeaturesPointsCloudRegistrationCorner.push_back(laserCloudCornerFromMap->points[pointSearchInd[j]]);
+                //             }
+                //         }
+                //         else{
+                //             FeaturesPointsCloudSurf.push_back(pointSel);
+                //             kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                //             for(int j = 0 ;j<5;j++){   
+                //             FeaturesPointsCloudRegistrationSurf.push_back(laserCloudSurfFromMap->points[pointSearchInd[j]]);
+                //             }   
 
 
-                        }
+                //         }
                 
-                }
+                // }
                     // std::stringstream filename;
                     // filename << "/home/xiesc/testpcd_FeaturesPointsCloudCorner/"<<num_id<<".pcd";
                     
@@ -862,7 +958,10 @@ public:
                    
                      
 
-                }
+                // }
+
+                // getGroundTruth();
+                // transformUpdate();
 
 
                 for (int i = 0; i < laserCloudCornerStackNum; i++) {
@@ -883,10 +982,10 @@ public:
                     laserCloudCornerArray[cubeInd]->push_back(pointSel);
                 }
                 }
-
+                pcl::PointCloud<PointType>::Ptr surfCloudForRANSAC(new pcl::PointCloud<PointType>());
                 for (int i = 0; i < laserCloudSurfStackNum; i++) {
                 pointAssociateToMap(&laserCloudSurfStack->points[i], &pointSel);
-
+                surfCloudForRANSAC->push_back(pointSel);
                 int cubeI = int((pointSel.x + 25.0) / 50.0) + laserCloudCenWidth;
                 int cubeJ = int((pointSel.y + 25.0) / 50.0) + laserCloudCenHeight;
                 int cubeK = int((pointSel.z + 25.0) / 50.0) + laserCloudCenDepth;
@@ -902,6 +1001,7 @@ public:
                     laserCloudSurfArray[cubeInd]->push_back(pointSel);
                 }
                 }
+                planeParBef=planeRANSAC(surfCloudForRANSAC);
 
                 for (int i = 0; i < laserCloudValidNum; i++) {
                 int ind = laserCloudValidInd[i];
@@ -964,14 +1064,7 @@ public:
                 mappingBackValue.transformAftMapped[5]=transformAftMapped[5];
 
 
-                if (num_id >0){
-                    pcl::PointCloud<PointType>::Ptr errorColoredPointCloud  = pointsErrorMonitor(laserCloudOri,coeffSel);
-
-                    std::stringstream filename;
-                    filename << "/home/xiesc/monitor/"<<num_id<<".pcd";
-                        
-                    pcl::io::savePCDFileASCII (filename.str(), *errorColoredPointCloud);
-                }
+                
 
 
 
@@ -984,10 +1077,10 @@ public:
             }//newdatain
         float errorAll = 0.0;
         for (int i =0 ;i < coeffSel->points.size();i++){
-            errorAll = errorAll + pow(coeffSel->points[i].intensity,2);
+            errorAll = errorAll + fabs(coeffSel->points[i].intensity);
         }
        
-        outfile<<errorAll<<std::endl;
+        outfile<<errorAll/(coeffSel->size())<<std::endl;
 
         return mappingBackValue;
         }
@@ -1002,7 +1095,14 @@ private:
     double **groundtruth;
 
     //
+    //用于存储当前RANSAC的平面法向量和前一帧的平面法向量
+    Eigen::VectorXf planeParBef;
+    Eigen::VectorXf planeParTobe;
 
+    //
+
+    int num_corner;
+    int num_surf;
 
     std::ofstream outfile;
     std::ofstream outfile2;
@@ -1251,8 +1351,12 @@ private:
 
 
 
-        //用于观测点云中哪些点误差大
-    pcl::PointCloud<PointType>::Ptr pointsErrorMonitor (pcl::PointCloud<PointType>::Ptr selectedCloud,pcl::PointCloud<PointType>::Ptr errorCloud)
+        //return the point cloud with the registration error
+        //the first ${num_corner} points are the corner feature points
+        //the rests are the surf feature points
+        //feature type determines the returned points, if feature type is true, return corner points. if feature points is false .return surf points
+
+    pcl::PointCloud<PointType>::Ptr pointsErrorMonitor (pcl::PointCloud<PointType>::Ptr selectedCloud,pcl::PointCloud<PointType>::Ptr errorCloud, bool featureType)
         {
             pcl::PointCloud<PointType>::Ptr errorColoredPointCloud(new pcl::PointCloud<PointType>());
             PointType tempPoint;
@@ -1264,19 +1368,91 @@ private:
 
             // }
 
-            for (int i = 0; i <errorCloud->points.size();i++)
+            if (featureType)
             {
-                tempPoint.x = selectedCloud->points[i].x;
-                tempPoint.y = selectedCloud->points[i].y;
-                tempPoint.z = selectedCloud->points[i].z;
-                // tempPoint.intensity = float(errorCloud->points[i].intensity)/maxError;
-                tempPoint.intensity = float(errorCloud->points[i].intensity);
-                errorColoredPointCloud->push_back(tempPoint);
+                for (int i = 0; i <num_corner;i++)
+                {
+                    tempPoint.x = selectedCloud->points[i].x;
+                    tempPoint.y = selectedCloud->points[i].y;
+                    tempPoint.z = selectedCloud->points[i].z;
+                    // tempPoint.intensity = float(errorCloud->points[i].intensity)/maxError;
+                    tempPoint.intensity = float(errorCloud->points[i].intensity);
+                    errorColoredPointCloud->push_back(tempPoint);
+                }
+            }
+            else
+            { 
+                for (int i = num_corner; i <errorCloud->points.size();i++)
+                {
+                    tempPoint.x = selectedCloud->points[i].x;
+                    tempPoint.y = selectedCloud->points[i].y;
+                    tempPoint.z = selectedCloud->points[i].z;
+                    // tempPoint.intensity = float(errorCloud->points[i].intensity)/maxError;
+                    tempPoint.intensity = float(errorCloud->points[i].intensity);
+                    errorColoredPointCloud->push_back(tempPoint);
+                }
             }
 
             return errorColoredPointCloud;
 
         }
+
+
+
+    //return the point cloud with the large error
+
+    void largeErrorEvaluation (pcl::PointCloud<PointType>::Ptr &selectedCloud,pcl::PointCloud<PointType>::Ptr &errorCloud,
+                                pcl::PointCloud<PointType>::Ptr &largeErrorCorner,pcl::PointCloud<PointType>::Ptr &largeErrorSurf,
+                                pcl::PointCloud<PointType>::Ptr &largeErrorCornerTarget,pcl::PointCloud<PointType>::Ptr &largeErrorSurfTarget)
+    {
+        for (int i = 0; i < errorCloud->points.size(); i++)
+         {
+                          
+                            
+                    PointType  pointOri,pointSel;     
+                    std::vector<int> pointSearchInd;
+                    std::vector<float> pointSearchSqDis;       
+            if (i<num_corner & errorCloud->points[i].intensity > 0.3)
+            {
+                    pointOri = selectedCloud->points[i];
+                    pointAssociateToMap(&pointOri, &pointSel);
+                    kdtreeCornerFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                    pointOri.intensity = errorCloud->points[i].intensity;
+                    largeErrorCorner->push_back(pointOri);
+                    for(int j = 0;j<5;j++)
+                    {   
+                        largeErrorCornerTarget->push_back(laserCloudCornerFromMap->points[pointSearchInd[j]]);
+
+                    }
+
+
+                    
+            }        
+            else if (i>=num_corner & errorCloud->points[i].intensity > 0.3)
+            {
+                    pointOri = selectedCloud->points[i];
+                    pointAssociateToMap(&pointOri, &pointSel); 
+                    kdtreeSurfFromMap->nearestKSearch(pointSel, 5, pointSearchInd, pointSearchSqDis);
+                    pointOri.intensity = errorCloud->points[i].intensity;
+                    largeErrorSurf->push_back(pointOri);
+                    for(int j = 0;j<5;j++)
+                    {
+                        largeErrorSurfTarget->push_back(laserCloudSurfFromMap->points[pointSearchInd[j]]);
+
+                    }
+
+            }       
+         }         
+                            
+                           
+    }
+
+
+
+
+
+
+
 
     int CountLines(string filename)//获取文件的行数
      {
@@ -1301,6 +1477,10 @@ private:
         
      }
 
+
+
+//this function is use to read the KITTI ground truth 
+//the each row of return value is cooresponding to the rigid transformation matrix from camera coordinates now to the initial camera coordinates
     double **readGroundTruth(string inputFile)
     {
 
@@ -1372,6 +1552,109 @@ private:
         }
 
         return euAngle;
+
+    }
+
+
+
+
+
+//This function will make the transformsum equal to the groundthruth
+//the groundtruth is the global variable containing the groundthruth of Camera 1 motion
+// the RLC and TLC represent the Rotation and the Translation matrix from Lidar to Camera 1
+    void getGroundTruth()
+    {
+                        //用于直接输入groundtruth来观测结果
+                
+        Eigen::Matrix<double,4,4> RTCam;
+        Eigen::Matrix<double,3,3> RLC;
+        Eigen::Matrix<double,3,1> TLC;
+        Eigen::Matrix<double,4,4> RTLC;
+
+        RTCam << groundtruth[num_id][0],groundtruth[num_id][1],groundtruth[num_id][2],groundtruth[num_id][3],
+                          groundtruth[num_id][4],groundtruth[num_id][5],groundtruth[num_id][6],groundtruth[num_id][7],
+                          groundtruth[num_id][8],groundtruth[num_id][9],groundtruth[num_id][10],groundtruth[num_id][11],
+                          0 ,0 ,0 ,1;
+                
+        RLC << 7.967514e-03 ,-9.999679e-01, -8.462264e-04,
+                       -2.771053e-03,8.241710e-04 ,-9.999958e-01,
+                       9.999644e-01, 7.969825e-03, -2.764397e-03;
+
+        TLC << -1.377769e-02, -5.542117e-02 ,-2.918589e-01;
+
+        RTLC.topLeftCorner(3,3) = RLC;
+        RTLC.topRightCorner(3,1) = TLC;
+        RTLC.bottomLeftCorner(1,4)<<0,0,0,1;
+        Eigen::Matrix<double,4,4> RTLL;
+        RTLL <<0.0,0.0,1.0,0.0,
+               1.0,0.0,0.0,0.0,
+               0.0,1.0,0.0,0.0,
+               0.0,0.0,0.0,1.0;
+
+
+                
+        Eigen::Matrix<double,4,4> RTL = (RTLL.inverse())*(RTLC.inverse())*RTCam*RTLC*RTLL;
+                // std::cout<<RTLC.inverse()*RTLC<<std::endl;
+                // std::cout<<RTLL.inverse()*RTLL<<std::endl;
+
+        // std::cout<<RTCam<<std::endl;
+        // std::cout<<RTLC<<std::endl;
+        // std::cout<<RTLL<<std::endl;                
+        // std::cout<<RTCam*RTLC*RTLL<<std::endl;
+
+
+        double *Euangle = rotationMatrixToAngle(RTL.topLeftCorner(3,3));
+        transformTobeMapped[0] = Euangle[1];
+        transformTobeMapped[1] = Euangle[0];
+        transformTobeMapped[2] = Euangle[2];
+        transformTobeMapped[3] = RTL(0,3);
+        transformTobeMapped[4] = RTL(1,3);
+        transformTobeMapped[5] = RTL(2,3);
+
+                //groundtruth输入部分结束
+
+                // std::cout<<RTLC<<std::endl;
+
+    }
+
+    Eigen::VectorXf planeRANSAC(pcl::PointCloud<pcl::PointXYZI>::Ptr _cloud)
+    {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr final (new pcl::PointCloud<pcl::PointXYZ>);
+         pcl::copyPointCloud(*_cloud, *cloud);
+
+        // pcl::io::savePCDFileASCII<pcl::PointXYZ> ("/home/xiesc/1.pcd", *cloud);
+        std::vector<int> inliers;
+  
+        // created RandomSampleConsensus object and compute the appropriated model
+      
+              pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr
+                 model_p (new pcl::SampleConsensusModelPlane<pcl::PointXYZ> (cloud));
+   
+            Eigen::VectorXf planePara;
+
+            pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_p);
+            ransac.setDistanceThreshold (.01);
+            ransac.computeModel();
+            ransac.getInliers(inliers);
+
+    ransac.getModelCoefficients(planePara);
+
+            ransac.getModelCoefficients(planePara);
+            // std::cerr<<planePara<<std::endl;
+
+        
+
+        // copies all inliers of the model computed to another PointCloud
+        pcl::copyPointCloud<pcl::PointXYZ>(*cloud, inliers, *final);
+
+        // creates the visualization object and adds either our orignial cloud or all of the inliers
+        // depending on the command line arguments specified.
+
+      
+        return planePara;
+
+
 
     }
 

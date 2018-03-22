@@ -107,8 +107,8 @@ class laserOdometry{
                 pcl::removeNaNFromPointCloud(*cornerPointsSharp,*cornerPointsSharp, indices);
                 int cornerPointsSharpNum = cornerPointsSharp->points.size();
                 int surfPointsFlatNum = surfPointsFlat->points.size();
-                
-                for (int iterCount = 0; iterCount < 50; iterCount++) {
+                //50
+                for (int iterCount = 0; iterCount < 20; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
 

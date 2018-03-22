@@ -26,6 +26,17 @@
 
 #include <string>
 
+
+#include <pcl/console/parse.h>
+#include <pcl/filters/extract_indices.h>
+
+
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
+#include <pcl/sample_consensus/sac_model_sphere.h>
+
+#include <boost/thread/thread.hpp>
+
 typedef pcl::PointXYZI PointType;
 
 inline double rad2deg(double radians)

@@ -11,7 +11,7 @@ project(loam_kitti)
 ## is used, also find other catkin packages
 
 # 增加PCL库的依赖
-FIND_PACKAGE( PCL REQUIRED )
+FIND_PACKAGE( PCL 1.2 REQUIRED )
 
 # 增加opencv的依赖
 FIND_PACKAGE( OpenCV  REQUIRED )
