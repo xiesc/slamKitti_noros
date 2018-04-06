@@ -101,6 +101,8 @@ laserMapping.hpp
 -
 transformMaintenance.hpp
 -
+loam_velodyne/common.h
+-
 pcl/point_types.h
 -
 pcl/io/pcd_io.h

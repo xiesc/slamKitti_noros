@@ -55,7 +55,7 @@ public:
 
 
             //用于直接输入groundtruth的初始化
-            groundtruth = readGroundTruth("/home/xiesc/01.txt");
+            // groundtruth = readGroundTruth("/home/xiesc/01.txt");
             
             //
         }
@@ -662,90 +662,90 @@ public:
                     }
                     }
 
-                    if (laserCloudOri->points.size()>100)
-                    {
+                    // if (laserCloudOri->points.size()>100)
+                    // {
                         
                     
-                    //add normal constrain
-                    float lmd = 20000.0;
+                    // //add normal constrain
+                //     float lmd = 0.0;
                      
                    
-                   //通过3个点来表示一个平面
-                   //1
-                    pointOri.x = 0;
-                    pointOri.z = 0;
-                    pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
-                    pointAssociateToMap(&pointOri, &pointSel); 
+                //    //通过3个点来表示一个平面
+                //    //1
+                //     pointOri.x = 0;
+                //     pointOri.z = 0;
+                //     pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
+                //     pointAssociateToMap(&pointOri, &pointSel); 
 
-                    float pa = planeParBef(0);
-                    float pb = planeParBef(1);
-                    float pc = planeParBef(2);
-                    float pd = planeParBef(3);
+                //     float pa = planeParBef(0);
+                //     float pb = planeParBef(1);
+                //     float pc = planeParBef(2);
+                //     float pd = planeParBef(3);
                     
-                    float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+                //     float pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
 
                        
 
-                    coeff.x =  lmd*pa;
-                    coeff.y =  lmd*pb;
-                    coeff.z =  lmd*pc;
-                    coeff.intensity = lmd*pd2;
+                //     coeff.x =  lmd*pa;
+                //     coeff.y =  lmd*pb;
+                //     coeff.z =  lmd*pc;
+                //     coeff.intensity = lmd*pd2;
 
                       
-                    laserCloudOri->push_back(pointOri);
-                    coeffSel->push_back(coeff);
+                //     laserCloudOri->push_back(pointOri);
+                //     coeffSel->push_back(coeff);
                             
-                    num_surf++;
-                    //2
-                    pointOri.x = 1;
-                    pointOri.z = 1;
-                    pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
-                    pointAssociateToMap(&pointOri, &pointSel); 
+                //     num_surf++;
+                //     //2
+                //     pointOri.x = 1;
+                //     pointOri.z = 1;
+                //     pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
+                //     pointAssociateToMap(&pointOri, &pointSel); 
 
-                     pa = planeParBef(0);
-                     pb = planeParBef(1);
-                     pc = planeParBef(2);
-                     pd = planeParBef(3);
+                //      pa = planeParBef(0);
+                //      pb = planeParBef(1);
+                //      pc = planeParBef(2);
+                //      pd = planeParBef(3);
                     
-                     pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+                //      pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
 
                        
                    
-                    coeff.x =  lmd*pa;
-                    coeff.y =  lmd*pb;
-                    coeff.z =  lmd*pc;
-                    coeff.intensity = lmd*pd2;
+                //     coeff.x =  lmd*pa;
+                //     coeff.y =  lmd*pb;
+                //     coeff.z =  lmd*pc;
+                //     coeff.intensity = lmd*pd2;
 
                       
-                    laserCloudOri->push_back(pointOri);
-                    coeffSel->push_back(coeff);
+                //     laserCloudOri->push_back(pointOri);
+                //     coeffSel->push_back(coeff);
 
-                    num_surf++;
-                    //3
-                    pointOri.x = -1;
-                    pointOri.z = 1;
-                    pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
-                    pointAssociateToMap(&pointOri, &pointSel); 
+                //     num_surf++;
+                //     //3
+                //     pointOri.x = -1;
+                //     pointOri.z = 1;
+                //     pointOri.y = (-planeParTobe(3)-planeParTobe(0)*pointOri.x-planeParTobe(2)*pointOri.z)/planeParTobe(1);
+                //     pointAssociateToMap(&pointOri, &pointSel); 
 
-                     pa = planeParBef(0);
-                     pb = planeParBef(1);
-                     pc = planeParBef(2);
-                     pd = planeParBef(3);
+                //      pa = planeParBef(0);
+                //      pb = planeParBef(1);
+                //      pc = planeParBef(2);
+                //      pd = planeParBef(3);
                     
-                     pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
+                //      pd2 = pa * pointSel.x + pb * pointSel.y + pc * pointSel.z + pd;
 
                        
 
-                    coeff.x =  lmd*pa;
-                    coeff.y =  lmd*pb;
-                    coeff.z =  lmd*pc;
-                    coeff.intensity = lmd*pd2;
+                //     coeff.x =  lmd*pa;
+                //     coeff.y =  lmd*pb;
+                //     coeff.z =  lmd*pc;
+                //     coeff.intensity = lmd*pd2;
 
                       
-                    laserCloudOri->push_back(pointOri);
-                    coeffSel->push_back(coeff);                    
-                    num_surf++;  
-                    }
+                //     laserCloudOri->push_back(pointOri);
+                //     coeffSel->push_back(coeff);                    
+                //     num_surf++;  
+                //     }
 
 
 
@@ -1634,7 +1634,7 @@ private:
             Eigen::VectorXf planePara;
 
             pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_p);
-            ransac.setDistanceThreshold (.01);
+            ransac.setDistanceThreshold (.04);
             ransac.computeModel();
             ransac.getInliers(inliers);
 

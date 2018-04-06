@@ -147,6 +147,16 @@ class scanRegistration{
             float relTime = 1;
             point.intensity = scanID + scanPeriod * relTime;
 
+            float ra = 1.0/fabs(point.y)*10000.0;
+            if (ra < 100000 && ra > 4000)
+            {
+                float uncurve = ra - sqrt(pow(ra,2)-pow(point.x,2)-pow(point.z,2));
+                if (point.y < 0)
+                    point.y += uncurve;
+                else
+                    point.y -= uncurve;
+            }
+
             laserCloudScans[scanID].push_back(point);
         }
         cloudSize = count;

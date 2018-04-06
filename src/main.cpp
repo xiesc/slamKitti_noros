@@ -3,6 +3,7 @@
 #include <laserOdometry.hpp>
 #include <laserMapping.hpp>
 #include <transformMaintenance.hpp>
+#include <loam_velodyne/common.h>
 
 
 #include <pcl/point_types.h>
@@ -54,6 +55,61 @@ using namespace std;
 
 
     }
+
+void
+uncurvePointcloud(pcl::PointCloud<PointXYZI> &input, pcl::PointCloud<PointXYZI> &output)
+{
+
+          
+
+           pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+           
+           pcl::copyPointCloud(input, *cloud);
+
+           
+           std::vector<int> inliers;
+
+           // created RandomSampleConsensus object and compute the appropriated model
+
+           pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr
+             model_p (new pcl::SampleConsensusModelPlane<pcl::PointXYZ> (cloud));
+
+
+               Eigen::VectorXf planePara;
+
+
+
+            
+
+                   pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_p);
+                   ransac.setDistanceThreshold (.01);
+                   ransac.computeModel();
+                   ransac.getInliers(inliers);
+                   ransac.getModelCoefficients(planePara);
+                   pcl::PointXYZI tmpPoint;
+					
+                  for (int i = 0;i<input.size();i++)
+                  {
+                      tmpPoint.x = input.points[i].x;
+                      tmpPoint.y = input.points[i].y;
+                      tmpPoint.z = input.points[i].z;
+                      tmpPoint.intensity = tmpPoint.z-(-planePara(3)-planePara(0)*tmpPoint.x-planePara(1)*tmpPoint.y)/planePara(2);
+                      // std::cerr<<tmpPoint.intensity<<std::endl;
+                      if (fabs(tmpPoint.intensity)<0.1){
+						  tmpPoint.z = (-planePara(3)-planePara(0)*tmpPoint.x-planePara(1)*tmpPoint.y)/planePara(2);
+						//   std::cerr<<tmpPoint.intensity<<std::endl;						  
+					  }
+                          
+                      
+					  tmpPoint.intensity =input.points[i].intensity;
+
+                    output.push_back(tmpPoint);        
+                   }
+             
+
+
+ }
+
 
 
 
@@ -128,9 +184,19 @@ int main(int argc, char* args[]){
         
 		cout << "Read KTTI point cloud with " << j << " belong to " <<filename<<","<<i <<endl;
         
+		
+			
+			// pcl::PointCloud<pcl::PointXYZI> uncurvpointcloud ;
+		    // uncurvePointcloud(points, uncurvpointcloud);
+			// points = uncurvpointcloud;
+		//  pcl::io::savePCDFileASCII ("/home/xiesc/test.pcd", points);
 
+	
+		
 
         scanValueBack = scanner.laserCloudHandler(points);
+	
+
 		odometryValueBack = odometrier.laserOdometryHandler(scanValueBack);
 		// if (i%5==0 || i<10){
 		// 	mappingBackValue = mapper.laserMappingHandler(odometryValueBack);

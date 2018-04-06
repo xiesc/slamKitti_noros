@@ -108,7 +108,7 @@ class laserOdometry{
                 int cornerPointsSharpNum = cornerPointsSharp->points.size();
                 int surfPointsFlatNum = surfPointsFlat->points.size();
                 //50
-                for (int iterCount = 0; iterCount < 20; iterCount++) {
+                for (int iterCount = 0; iterCount < 25; iterCount++) {
                     laserCloudOri->clear();
                     coeffSel->clear();
 

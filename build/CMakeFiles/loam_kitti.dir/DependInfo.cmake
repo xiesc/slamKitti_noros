@@ -15,6 +15,7 @@ set(CMAKE_TARGET_DEFINITIONS_CXX
   "DISABLE_PNG"
   "QT_CORE_LIB"
   "QT_GUI_LIB"
+  "QT_NO_DEBUG"
   "QT_WIDGETS_LIB"
   "vtkFiltersFlowPaths_AUTOINIT=1(vtkFiltersParallelFlowPaths)"
   "vtkIOExodus_AUTOINIT=1(vtkIOParallelExodus)"
